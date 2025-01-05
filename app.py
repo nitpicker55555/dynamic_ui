@@ -49,7 +49,7 @@ def send_message():
     # Process the message
     response_message = process_message(session['messages'])
     # response_message = "text"
-    session['messages'].append(message_template('answer',response_message))
+    session['messages'].append(message_template('assistant',response_message))
 
     # Return the processed message
     return jsonify({"response": response_message})
