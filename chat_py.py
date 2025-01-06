@@ -11,10 +11,10 @@ def message_template(role,new_info):
     new_dict={'role':role,'content':new_info}
     return new_dict
 
-GPT_MODEL = "gpt-3.5-turbo-0613"
+GPT_MODEL = "gpt-4o-mini"
 client = OpenAI()
 
-def chat_single(messages,mode="",model='gpt-3.5-turbo-0125'):
+def api_answer(messages,mode="",model="gpt-4o"):
     if mode=="json":
 
         response = client.chat.completions.create(
@@ -38,7 +38,7 @@ def chat_single(messages,mode="",model='gpt-3.5-turbo-0125'):
             model=model,
             messages=messages,
         temperature = 0,
-
+            max_tokens=8192
         )
-    # print(response.choices[0].message.content)
+    print(response.choices[0].message.content)
     return response.choices[0].message.content

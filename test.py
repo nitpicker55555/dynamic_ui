@@ -1,28 +1,41 @@
-import pandas as pd
+def run_code_from_string(code_str):
+    """
+    去掉包含的代码块标记（```python 和 ```）并运行代码
 
-def add_ratio_column(input_csv, output_csv):
-    try:
-        # 读取CSV文件
-        df = pd.read_csv(input_csv)
+    :param code_str: str，包含代码的字符串
+    :return: any，返回代码中定义的变量 searched_result 的值（如果存在）
+    """
+    # 去掉 ```python 和 ``` 标记
+    if code_str.startswith("```python"):
+        code_str = code_str[len("```python"):]
+    # 直接移除最后一行的 ``` 标记
+    lines = code_str.splitlines()
+    if lines and lines[-1].strip() == "```":
+        lines = lines[:-1]
+    code_str = "\n".join(lines)
 
-        # 检查是否存在需要的列
-        if 'vehiclecount' not in df.columns or 'totalspaces' not in df.columns:
-            print("Error: Columns 'vehiclecount' and 'totalspaces' are required in the CSV file.")
-            return
+    # 去除可能的首尾空格
+    code_str = code_str.strip()
 
-        # 计算新列的值并添加到DataFrame
-        df['vehiclecount_totalspaces_ratio'] = df['vehiclecount'] / df['totalspaces']
+    # 定义局部命名空间
+    local_namespace = {}
 
-        # 保存修改后的DataFrame到新文件
-        df.to_csv(output_csv, index=False)
-        print(f"New column added successfully. Saved to {output_csv}")
+    # 执行代码
+    exec(code_str, globals(), local_namespace)
 
-    except FileNotFoundError:
-        print("Error: The input CSV file was not found.")
-    except Exception as e:
-        print(f"An error occurred: {e}")
+    # 返回 searched_result 的值（如果存在）
+    return local_namespace.get("searched_result", None)
 
-# 示例用法
-input_csv = r'C:\Users\admin\Desktop\my_project\chat\data\parking.csv'   # 输入文件名
-output_csv = r'C:\Users\admin\Desktop\my_project\chat\data\parking2.csv' # 输出文件名
-add_ratio_column(input_csv, output_csv)
+# 示例展示 globals() 的作用
+example_global_var = "I am a global variable"
+code_string = """```python
+print('Hello from the code block!')
+print(f'Accessing global variable: {example_global_var}')
+new_global_var = 'I am defined within exec and now accessible globally!'
+searched_result = 42
+```
+"""
+result = run_code_from_string(code_string)
+
+# 打印返回的 searched_result
+print(result)  # 输出: 42

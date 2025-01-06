@@ -14,7 +14,7 @@ def know_data( column_names,csv_file):
     返回：
         dict: 包含每个列的数据类型和数据范围的信息。
     """
-    csv_file+='.csv'
+    csv_file=f"available_data/{csv_file}.csv"
     data_range_string='data_range'
 
     try:
@@ -22,6 +22,9 @@ def know_data( column_names,csv_file):
         df = pd.read_csv(csv_file)
         if not column_names:
             column_names = df.columns.tolist()
+
+        if isinstance(column_names, str):
+            column_names = [column_names]
         # 检查列名是否存在
         missing_columns = [col for col in column_names if col not in df.columns]
         if missing_columns:
@@ -94,48 +97,79 @@ def know_data( column_names,csv_file):
         return {"error": str(e)}
     except Exception as e:
         return {"error": f"发生未知错误: {e}"}
+
+
 def get_data(data_names, csv_filename):
     """
     从CSV文件中查找数据名称并返回对应行的数据，返回格式为JSON。
 
     :param data_names: 单个数据名称或数据名称列表
-    :param csv_filename: CSV文件名
+    :param csv_filename: CSV文件名（不含扩展名）
     :return: JSON格式的结果
     """
     # 确保 data_names 是列表
-    csv_filename+='.csv'
-    if not isinstance(data_names, list):
-        data_names = [data_names]
+    csv_filename=f"available_data/{csv_filename}.csv"
 
-    # 存储匹配的行
-    matched_rows = []
 
-    # 打开CSV文件
     try:
-        with open(csv_filename, mode='r', encoding='utf-8') as csv_file:
-            reader = csv.DictReader(csv_file)
+        # 读取CSV文件
+        df = pd.read_csv(csv_filename, encoding='utf-8-sig')
 
-            for row in reader:
-                # 检查每行是否包含任何一个数据名称
-                if any(data_name in row.values() for data_name in data_names):
-                    matched_rows.append(row)
+        # 如果 data_names 为空，返回所有数据
+        if not data_names:
+            raw_data = df.to_dict(orient='records')
+            print({"length": len(raw_data), "keys": list(df.columns)})
+            return raw_data
 
-        # 转换为JSON格式
-        print(json.dumps(matched_rows, ensure_ascii=False, indent=4))
-        return json.dumps(matched_rows, ensure_ascii=False, indent=4)
+        if isinstance(data_names, str):
+            data_names = [data_names]
+
+        # 查找包含指定数据名称的行
+        matched_rows = df[df.apply(lambda row: any(data_name in row.values for data_name in data_names), axis=1)]
+
+        # 如果有匹配的行，返回数据和基本信息
+        if not matched_rows.empty:
+            raw_data = matched_rows.to_dict(orient='records')
+            data_intro = {'length': len(raw_data), 'keys': list(matched_rows.columns)}
+            print(data_intro)
+            return raw_data
+        else:
+            data_intro = {'length': 0}
+            print(data_intro)
+            return []
 
     except FileNotFoundError:
         return json.dumps({"error": "CSV file not found."}, ensure_ascii=False)
     except Exception as e:
         return json.dumps({"error": str(e)}, ensure_ascii=False)
 
-# 示例用法
-# result = get_column_info("example.csv", "column_name")
-# print(result)
-# Step 1: Understand the relevant columns in the `weather` and `pollution` databases
-# a=know_data(None,'pollution')
-# b=know_data(None,'weather')
-c=know_data(None,'filtered_events')
+    # except Exception as e:
+    #     return json.dumps({"error": str(e)}, ensure_ascii=False)
 
-# pollution_data_query = get_data(good_pollution_condition, pollution_db)
-# weather_data_query = get_data(good_weather_conditions, weather_db)
+# Step 1: 查询天气好的数据
+# 查询天气好的数据
+good_weather = get_data(['☀️', '🌤️'], 'weather')
+
+# 筛选天气好的日期
+good_weather_dates = [entry['date'] for entry in good_weather]
+
+# 查询污染不严重的数据
+low_pollution = get_data(['Good'], 'pollution')
+
+# 筛选污染不严重的日期
+low_pollution_dates = [entry['date'] for entry in low_pollution]
+
+# 找到天气好且污染不严重的公共日期
+good_dates = list(set(good_weather_dates) & set(low_pollution_dates))
+
+# 查询这些日期对应的活动
+final_result = get_data(good_dates, 'events')
+print(final_result)
+# pollution=get_data('2014-08-01','pollution')
+wea=get_data(None,'pollution')
+# print(pollution[0])
+print(wea)
+
+# get_data('Good', 'weather')
+# get_data('Good', 'weather')
+# # print(know_data(final_result[0].keys(),'events'))

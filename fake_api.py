@@ -6,16 +6,23 @@ import time
 def message_template(role,new_info):
     new_dict={'role':role,'content':new_info}
     return new_dict
-def api_answer(messages):
+def api_answer(messages,json_format=False):
     conn = http.client.HTTPSConnection("api.openai-hub.com")
     payload = json.dumps({
         "model": "gpt-4o",
         "messages": messages
     })
-    headers = {
-        'Authorization': 'Bearer sk-Nf0kLEmbRPRSFdD8qwlg1e7EHuoJMyaf1Z60Fh0IDLYosBEs',
-        'Content-Type': 'application/json'
-    }
+    if json_format:
+        headers = {
+            'Authorization': 'Bearer sk-Nf0kLEmbRPRSFdD8qwlg1e7EHuoJMyaf1Z60Fh0IDLYosBEs',
+            'Content-Type': 'json'
+        }
+    else:
+
+        headers = {
+            'Authorization': 'Bearer sk-Nf0kLEmbRPRSFdD8qwlg1e7EHuoJMyaf1Z60Fh0IDLYosBEs',
+            'Content-Type': 'application/json'
+        }
     # conn.request("POST", "/v1/chat/completions", payload, headers)
     # res = conn.getresponse()
     # data = res.read()
@@ -31,7 +38,7 @@ def api_answer(messages):
             data = res.read()
             result = json.loads(data.decode("utf-8"))
 
-            print(result["choices"][0]["message"]["content"])
+            print(result)
             return result["choices"][0]["message"]["content"]
 
             # break  # 成功后退出循环
