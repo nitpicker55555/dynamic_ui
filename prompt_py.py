@@ -1,24 +1,28 @@
 
-def get_html_generate_prompt(query,searched_result,other_results):
+def get_html_generate_prompt(query,searched_result,other_results,variables):
     html_generate_prompt=f"""
     
+Create an HTML page to display data dynamically based on the following variables:
+
 The user wants to search for {query}.
-The system retrieves a list of JSON data formatted as:
+The system retrieves a list of JSON to be highlighted:
 searched_result = [{searched_result}]
-Additionally, there is a separate list of unrelated results to be displayed in a dark-themed style:
+other_results,displayed in a dark-themed style:
 {other_results}
 
-Create an HTML page to display all this data. The page should include smooth animations, hover effects, and interactive clickable elements.
+The page must include:
 
-Use tooltips or pop-up bubbles to display detailed information, such as map data, in an intuitive and concise way.
-Design the UI with rounded corners, soft shadows, visible grid lines, and rich emoji usage. Adopt a calendar-style layout to represent each day.
+Smooth animations and interactive clickable elements.
+Hover effects, rounded corners, soft shadows, grid lines, and emojis for a modern UI.
+A calendar-style layout to represent each day.
+Tooltips or pop-up bubbles to display detailed information (e.g., map data)(Ensure the popup bubble is on the topmost layer.).
+Highlighted styling for searched_result data, with other_results styled in a darker theme.
+Leaflet integration for map-related features.
+Ensure the layout is contained within a manageable-sized container, suitable for embedding in larger layouts.
 
-Ensure that the searched_result data is visually highlighted, while other data is shown in a dark theme.
-Utilize Leaflet for any map-based features.
+adhering strictly to the provided variable names: {variables}. The HTML page must dynamically adjust its content based on the variable values, meaning replacing these values will automatically update the display.
 
-Preserve the provided variable names exactly as they are, and dynamically generate UI components based on the data.
-
-Provide an HTML page code that strictly adheres to the given variable names. The page content should dynamically adjust based on the variable values, meaning replacing the variable values will automatically update the HTML page.
+Provide only the HTML code, formatted professionally, with the provided variable.
     """
     return html_generate_prompt
 def get_data_prompt(data_info):
@@ -49,6 +53,18 @@ know_data_prompt="""
     {
         "key_database":["events"],
         "related_databases": ["pollution", "weather"]
+    }
+    用户：我想知道天气温度和污染物浓度的关系
+    Return: 
+    {
+        "key_database":["pollution", "weather"],
+        "related_databases": []
+    }
+    用户：我想知道距离某个活动最近的5个停车场
+    Return: 
+    {
+        "key_database":["events","parking"],
+        "related_databases": []
     }
     """
 

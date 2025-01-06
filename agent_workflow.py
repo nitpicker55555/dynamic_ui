@@ -111,11 +111,12 @@ def html_generate_agent(query,searched_result,other_result):
     for databasename in other_result:
         other_result_short+=f"{databasename}=[{other_result[databasename][0]},...]\n"
         # other_result_short[databasename]=[other_result[databasename][0]]
-
-    html_prompt=get_html_generate_prompt(query,str(searched_result[0])+",...",other_result_short)
+    variables_list=["searched_result"]
+    variables_list.extend(list(other_result.keys()))
+    html_prompt=get_html_generate_prompt(query,str(searched_result[0])+",...",other_result_short,variables_list)
     print("other_result_short", html_prompt)
     messages.append(message_template('system',html_prompt))
-    messages.append(message_template('user',query+"，我提供的数据只是一部分，你可以模拟出几个数据做演示"))
+    messages.append(message_template('user',query))
     html_generate_agent_response=api_answer(messages)
     replacements_list=[]
     replacements_list.append({'variable':"searched_result","value":searched_result})
@@ -124,40 +125,41 @@ def html_generate_agent(query,searched_result,other_result):
     print("replacements_list",replacements_list)
     replacements_json =json.dumps(replacements_list)
     new_html=update_js_arrays(html_generate_agent_response,replacements_json)
-    return new_html
+    return new_html,html_generate_agent_response,replacements_json
 
 def generate_response(query):
     code_sample = """```python
-    good_weather = get_data(['☀️', '🌤️'], 'weather')
+    
+good_weather = get_data(['☀️', '🌤️'], 'weather')
 
-    # 提取日期列表
-    good_weather_dates = [entry['date'] for entry in good_weather]
+# 提取日期列表
+good_weather_dates = [entry['date'] for entry in good_weather]
 
-    # 查询污染小的数据，假设污染小的条件是平均颗粒物小于80
-    low_pollution = get_data(['Good'], 'pollution')
+# 查询污染小的数据，假设污染小的条件是平均颗粒物小于80
+low_pollution = get_data(['Good'], 'pollution')
 
-    # 提取日期列表
-    low_pollution_dates = [entry['date'] for entry in low_pollution]
+# 提取日期列表
+low_pollution_dates = [entry['date'] for entry in low_pollution]
 
-    # 找到天气好且污染小的日期
-    good_weather_low_pollution_dates = set(good_weather_dates) & set(low_pollution_dates)
+# 找到天气好且污染小的日期
+good_weather_low_pollution_dates = set(good_weather_dates) & set(low_pollution_dates)
 
-    # 查询活动数据
-    searched_result = []
-    for date in good_weather_low_pollution_dates:
-        activities = get_data(date, 'events')
-        searched_result.extend(activities)
+# 查询活动数据
+searched_result = []
+for date in good_weather_low_pollution_dates:
+    activities = get_data(date, 'events')
+    searched_result.extend(activities)
 
-    ```
+```
     """
     data_sample = """
-    {
-        "key_database": ["events"],
-        "related_databases": ["pollution", "weather"]
-    }
+{
+    "key_database": ["events"],
+    "related_databases": ["pollution", "weather"]
+}
     """
     # query = '我想知道污染程度随天气的变化关系'
-    databases_info, other_result = know_data_agent(query)
+    databases_info, other_result = know_data_agent(query,data_sample)
     searched_result = get_data_agent(databases_info, query)
     # other_result_short = {}
     # for databasename in other_result:
@@ -165,6 +167,7 @@ def generate_response(query):
     # print(other_result_short)
     print("searched_result", searched_result)
     print("other_result", other_result)
-    new_html = html_generate_agent(query, searched_result, other_result)
+    new_html,html_generate_agent_response,replacements_json = html_generate_agent(query, searched_result, other_result)
     print(new_html)
-    return new_html
+    return new_html,html_generate_agent_response,replacements_json
+# generate_response('我想知道污染程度随天气的变化关系')

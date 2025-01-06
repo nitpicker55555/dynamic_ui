@@ -148,27 +148,27 @@ def get_data(data_names, csv_filename):
 
 # Step 1: 查询天气好的数据
 # 查询天气好的数据
-good_weather = get_data(['☀️', '🌤️'], 'weather')
-
-# 筛选天气好的日期
-good_weather_dates = [entry['date'] for entry in good_weather]
-
-# 查询污染不严重的数据
-low_pollution = get_data(['Good'], 'pollution')
-
-# 筛选污染不严重的日期
-low_pollution_dates = [entry['date'] for entry in low_pollution]
-
-# 找到天气好且污染不严重的公共日期
-good_dates = list(set(good_weather_dates) & set(low_pollution_dates))
-
-# 查询这些日期对应的活动
-final_result = get_data(good_dates, 'events')
-print(final_result)
-# pollution=get_data('2014-08-01','pollution')
-wea=get_data(None,'pollution')
-# print(pollution[0])
-print(wea)
+# good_weather = get_data(['☀️', '🌤️'], 'weather')
+#
+# # 筛选天气好的日期
+# good_weather_dates = [entry['date'] for entry in good_weather]
+#
+# # 查询污染不严重的数据
+# low_pollution = get_data(['Good'], 'pollution')
+#
+# # 筛选污染不严重的日期
+# low_pollution_dates = [entry['date'] for entry in low_pollution]
+#
+# # 找到天气好且污染不严重的公共日期
+# good_dates = list(set(good_weather_dates) & set(low_pollution_dates))
+#
+# # 查询这些日期对应的活动
+# final_result = get_data(good_dates, 'events')
+# print(final_result)
+# # pollution=get_data('2014-08-01','pollution')
+# wea=get_data(None,'pollution')
+# # print(pollution[0])
+# print(wea)
 
 # get_data('Good', 'weather')
 # get_data('Good', 'weather')
