@@ -1,6 +1,6 @@
 from prompt_py import *
 # from fake_api import *
-from chat_py import *
+from azure_api import *
 from process_data import *
 import re
 from math import radians, cos, sin, sqrt, atan2
@@ -93,11 +93,11 @@ def know_data_agent(query,code_sample=None):
     for database_name in know_data_agent_response['related_databases']:
         other_result[database_name+"_data"]=get_data(None,database_name)
 
-    return databases_info,other_result
-def get_data_agent(databases_info,query,code_sample=None):
+    return databases_info,other_result,know_data_agent_response['route_plan']
+def get_data_agent(databases_info,query,route_plan,code_sample=None):
     messages=[]
 
-    messages.append(message_template('system',get_data_prompt(databases_info)))
+    messages.append(message_template('system',get_data_prompt(databases_info,route_plan)))
     messages.append(message_template('user',query))
     if code_sample:
         get_data_agent_response = code_sample
@@ -107,7 +107,7 @@ def get_data_agent(databases_info,query,code_sample=None):
     # searched_result
     return searched_result
 
-def html_generate_agent(query,searched_result,other_result):
+def html_generate_agent(query,searched_result,other_result,route_plan):
     messages=[]
     other_result_short=""
     if len(other_result)!=0:
@@ -116,7 +116,7 @@ def html_generate_agent(query,searched_result,other_result):
             # other_result_short[databasename]=[other_result[databasename][0]]
     variables_list=["searched_result"]
     variables_list.extend(list(other_result.keys()))
-    html_prompt=get_html_generate_prompt(query,str(searched_result[0])+",...",other_result_short,variables_list)
+    html_prompt=get_html_generate_prompt(query,str(searched_result[0])+",...",other_result_short,variables_list,route_plan)
     print("html_prompt", html_prompt)
     messages.append(message_template('system',html_prompt))
     messages.append(message_template('user',query))
@@ -162,148 +162,16 @@ for date in good_weather_low_pollution_dates:
 }
     """
     # query = '我想知道污染程度随天气的变化关系'
-    databases_info, other_result = know_data_agent(query)
-    searched_result = get_data_agent(databases_info, query)
+    databases_info, other_result,route_plan = know_data_agent(query)
+    searched_result = get_data_agent(databases_info, query,route_plan)
     # other_result_short = {}
     # for databasename in other_result:
     #     other_result_short[databasename] = [other_result[databasename][0]]
     # print(other_result_short)
     print("searched_result", searched_result)
     print("other_result", other_result)
-    new_html,html_generate_agent_response,replacements_json = html_generate_agent(query, searched_result, other_result)
+    new_html,html_generate_agent_response,replacements_json = html_generate_agent(query, searched_result, other_result,route_plan)
     print(new_html)
     return new_html,html_generate_agent_response,replacements_json
-# generate_response('我想知道天气好污染小的时候有啥活动')
-# good_weather = get_data(['☀️', '🌤️'], 'weather')
-#
-# # Step 2: Get good pollution data
-# good_pollution = get_data(['Good'], 'pollution')
-#
-# # Step 3: Extract dates with good weather
-# good_weather_dates = [entry['date'] for entry in good_weather]
-#
-# # Step 4: Extract dates with good pollution
-# good_pollution_dates = [entry['date'] for entry in good_pollution]
-#
-# # Step 5: Find common dates with both good weather and good pollution
-# common_good_dates = set(good_weather_dates).intersection(good_pollution_dates)
-# print(common_good_dates)
-# # Step 6: Get events on common good dates
-# searched_result = get_data(list(common_good_dates), 'events')
-# event_title = 'Tegnearrangement med Mark Bundgaard'
-# event_data = get_data([event_title], 'events')
-#
-# # Step 2: Extract the latitude and longitude of the event
-# event_latitude = event_data[0]['latitude']
-# event_longitude = event_data[0]['longitude']
-#
-# # Step 3: Get all parking data
-# parking_data = get_data([], 'parking')
-
-# Step 4: Calculate the distance from the event to each parking location
-
-
-# def calculate_distance(event_location, parking_location):
-#     return geodesic(event_location, parking_location).kilometers
-#
-# event_location = (event_latitude, event_longitude)
-# parking_distances = []
-#
-# for parking in parking_data:
-#     parking_location = (parking['latitude'], parking['longitude'])
-#     distance = calculate_distance(event_location, parking_location)
-#     parking_distances.append((distance, parking))
-#
-# # Step 5: Sort the parking locations by distance
-# parking_distances.sort(key=lambda x: x[0])
-#
-# # Step 6: Select the 5 closest parking locations
-# closest_parkings = parking_distances[:5]
-#
-# # Step 7: Extract the parking data for the 5 closest locations
-# searched_result = [parking[1] for parking in closest_parkings]
-# print(searched_result)
-# Step 1: Search for the event with the title 'Tegnearrangement med Mark Bundgaard'
-# event_title = 'Tegnearrangement med Mark Bundgaard'
-# event_data = get_data([event_title], 'events')
-#
-# # Step 2: Extract the longitude and latitude of the event
-# event_longitude = event_data[0]['longitude']
-# event_latitude = event_data[0]['latitude']
-#
-# # Step 3: Get all parking data
-# parking_data = get_data(None, 'parking')
-# print(parking_data)
-# # Step 4: Calculate the distance from the event to each parking location
-# from geopy.distance import geodesic
-#
-# def calculate_distance(event_location, parking_location):
-#     return geodesic(event_location, parking_location).kilometers
-#
-# event_location = (event_latitude, event_longitude)
-# parking_distances = []
-#
-# for parking in parking_data:
-#     parking_location = (parking['latitude'], parking['longitude'])
-#     distance = calculate_distance(event_location, parking_location)
-#     parking_distances.append((distance, parking))
-#
-# # Step 5: Sort the parking locations by distance and select the 5 closest
-# parking_distances.sort(key=lambda x: x[0])
-# closest_parkings = parking_distances[:5]
-#
-# # Step 6: Extract the parking data for the 5 closest locations
-# searched_result = [parking[1] for parking in closest_parkings]
-# event_title = 'Tegnearrangement med Mark Bundgaard'
-# event_data = get_data([event_title], 'events')
-#
-# # Step 2: Extract the longitude and latitude of the event
-# event_longitude = event_data[0]['longitude']
-# event_latitude = event_data[0]['latitude']
-#
-# # Step 3: Get all parking data
-# parking_data = get_data([], 'parking')
-# print(parking_data)
-# # Step 4: Calculate the distance from the event to each parking location
-# from geopy.distance import geodesic
-#
-# def calculate_distance(event_location, parking_location):
-#     return geodesic(event_location, parking_location).kilometers
-#
-# event_location = (event_latitude, event_longitude)
-# parking_distances = []
-# print(event_location)
-# for parking in parking_data:
-#     parking_location = (parking['latitude'], parking['longitude'])
-#     distance = calculate_distance(event_location, parking_location)
-#     parking_distances.append((distance, parking))
-#
-# # Step 5: Sort the parking locations by distance and select the 5 closest
-# parking_distances.sort(key=lambda x: x[0])
-# closest_parkings = parking_distances[:5]
-#
-# # Step 6: Extract the parking data for the 5 closest locations
-# searched_result = [parking[1] for parking in closest_parkings]
-# print(closest_parkings)
-# event_title = "Tegnearrangement med Mark Bundgaard"
-# event_data = get_data(['Tegnearrangement med Mark Bundgaard'], 'events')
-#
-# print(event_data)
-# print(know_data(None,'events'))
-# all_weather_data = get_data([ 'date','average_temperature'], 'weather')
-#
-# # Step 2: Get all pollution data
-# all_pollution_data = get_data(['date', 'average_particullate_matter'], 'pollution')
-#
-# # Step 3: Merge data based on date
-# merged_data = []
-# for weather in all_weather_data:
-#     for pollution in all_pollution_data:
-#         if weather['date'] == pollution['date']:
-#             merged_entry = {
-#                 'date': weather['date'],
-#                 'average_temperature': weather['average_temperature'],
-#                 'average_particullate_matter': pollution['average_particullate_matter']
-#             }
-#             merged_data.append(merged_entry)
-# print(all_weather_data)
+generate_response('我想知道名为NORREPORT的停车场到名为Viby Bibliotek的活动的路线规划')
+# resuls=get_data(['2014-08-02', '2014-08-09', '2014-08-15', '2014-08-01', '2014-08-04'],'events')

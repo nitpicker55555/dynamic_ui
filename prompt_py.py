@@ -1,5 +1,7 @@
 
-def get_html_generate_prompt(query,searched_result,other_results,variables):
+def get_html_generate_prompt(query,searched_result,other_results,variables,route_plan):
+
+
     if other_results!="":
         other_results_str=f"""
             other_results,displayed in a dark-themed style:
@@ -8,17 +10,53 @@ def get_html_generate_prompt(query,searched_result,other_results,variables):
         """
     else:
         other_results_str=''
+    if route_plan:
+        result_show_method=f"""
+    Design a user interface panel for visualizing the path planning results, which are structured as follows:
+    searched_result = [{searched_result}].
+    
+    The panel should include the following functionalities and features:
+    
+    Route Ranking Display:
+    
+    The path planning results are composed of routes grouped by three different ranks.
+    Include buttons or toggles to switch between the display of different rank routes.
+    Route Overview Details:
+    
+    For each rank, display the following aggregate metrics:
+    Average Velocity
+    Total Distance
+    Total Duration
+    Interactive Route Elements:
+    
+    Clicking on any individual route segment should display:
+    Velocity
+    REPORT_ID
+    DURATION_IN_SEC
+    Path Visualization:
+    
+    Draw each route segment by connecting its POINT_1 and POINT_2 using straight lines (based on their latitude and longitude).
+    Assign colors to each segment based on its VELOCITY:
+    Higher velocity = lighter color.
+    Lower velocity = darker color.
+    Ensure the panel design is user-friendly, clearly labeled, and effectively communicates the information.
+    And also show Start node and End node in map.
+        """
+    else:
+        result_show_method=f"""
+    The system retrieves a list of JSON to be highlighted:
+    searched_result = [{searched_result}]
+
+    {other_results_str}
+        """
 
     html_generate_prompt=f"""
         
     Create an HTML page to display data dynamically based on the following variables:
     
     The user wants to search for {query}.
-    The system retrieves a list of JSON to be highlighted:
-    searched_result = [{searched_result}]
 
-    {other_results_str}
-    
+    {result_show_method}
     The page must include:
     
     Smooth animations and interactive clickable elements.
@@ -35,7 +73,15 @@ def get_html_generate_prompt(query,searched_result,other_results,variables):
         """
 
     return html_generate_prompt
-def get_data_prompt(data_info):
+def get_data_prompt(data_info,route_plan):
+    if route_plan:
+        route_plan_prompt="""
+        用户需要路径规划时，可以调用函数
+        searched_result=plan_routes(start_longitude, start_latitude, end_longitude, end_latitude)
+    
+        """
+    else:
+        route_plan_prompt=""
     data_prompt=f"""
     我有下面几个数据库，他们每个键的数据类型和范围如下所示：
     {data_info}
@@ -45,8 +91,10 @@ def get_data_prompt(data_info):
     比如good_weather=get_data(['☀️','🌤️'],'weather')
     Return：got corresponding data：overview:{{'length': 14, 'keys': dict_keys(['date', 'weather', 'average_temperature', 'average_wind_speed'])}}
     比如查找名为aaa的活动，event_data = get_data(['aaa'], 'events')
-    Return [{{'city': 'Tilst', 'title': 'aaa', 'price': '0', 'library': 'Tilst Bibliotek', 'longitude': 10.111042, 'latitude': 56.18945, 'date': '2013-10-28'}}]
-
+    Return [{{'city': 'bbb', 'title': 'aaa', 'price': '0', 'library': 'Tilst Bibliotek', 'longitude': 10.111042, 'latitude': 56.18945, 'date': '2013-10-28'}}]
+    
+    {route_plan_prompt}
+    
     你负责查到对应的数据，如果这个查询不能同时完成，比如后面的查询需要依赖前面的查询结果，那么需要按照依赖关系写出合理的查询程序。如果用户需要绘制图，你不要写出绘制代码，只是提供绘制的数据
     只回答代码，每行函数都要有变量
     最终得出的数据变量是searched_result,是搜索到的数据列表，和get_data的返回格式一致
@@ -59,25 +107,36 @@ know_data_prompt="""
     pollution：longitude,latitude,date,average_particullate_matter,pollution_condition
     weather：date,weather,average_temperature,average_wind_speed
     parking：date,longitude,latitude,garagecode,occupancy rate
-    
+    route_plan
     你的职责是根据用户需求返回一个关键和相关的数据库列表，以json格式返回
+    
     用户：我想知道天气好和污染小的时候有什么活动
     Return: 
     {
         "key_database":["events"],
-        "related_databases": ["pollution", "weather"]
+        "related_databases": ["pollution", "weather"],
+        "route_plan":false
     }
     用户：我想知道天气温度和污染物浓度的关系
     Return: 
     {
         "key_database":["pollution", "weather"],
-        "related_databases": []
+        "related_databases": [],
+        "route_plan":false
     }
     用户：我想知道距离某个活动最近的5个停车场
     Return: 
     {
         "key_database":["events","parking"],
-        "related_databases": []
+        "related_databases": [],
+        "route_plan":false
+    }
+    用户：帮我规划某个活动到某个停车场的路线
+    Return: 
+    {
+        "key_database":["events","parking"],
+        "related_databases": [],
+        "route_plan":true
     }
     """
 

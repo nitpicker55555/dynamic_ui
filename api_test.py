@@ -1,5 +1,5 @@
 # from fake_api import *
-from chat_py import *
+from azure_api import *
 def know_data_agent(query):
     messages=[]
 

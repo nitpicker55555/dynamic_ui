@@ -1,5 +1,5 @@
 import json
-
+from route_plan import *
 import pandas as pd
 import numpy as np
 import csv
@@ -143,7 +143,7 @@ def get_data(data_names, csv_filename):
 
         # 查找包含指定数据名称的行
         matched_rows = df[df.apply(lambda row: any(data_name in row.values for data_name in data_names), axis=1)]
-
+        print(matched_rows)
         # 如果有匹配的行，返回数据和基本信息
         if not matched_rows.empty:
             raw_data = matched_rows.to_dict(orient='records')
@@ -160,12 +160,20 @@ def get_data(data_names, csv_filename):
     except Exception as e:
         return json.dumps({"error": str(e)}, ensure_ascii=False)
 
-
+def plan_routes(start_longitude, start_latitude, end_longitude, end_latitude):
+    best_3_routes = plan_routes_function(start_longitude, start_latitude, end_longitude, end_latitude, k=3)
+    return best_3_routes
+# get_data("Viby Bibliotek",'events')
+# start_longitude, start_latitude = 10.21284, 56.16184  # 北京天安门
+# end_longitude, end_latitude = 10.164431,56.130402 # 北京某地示例
+# #
+# best_3_routes = plan_routes( start_longitude, start_latitude, end_longitude, end_latitude, k=3)
+# # 使用示例
     # except Exception as e:
     #     return json.dumps({"error": str(e)}, ensure_ascii=False)
 
-# Step 1: 查询天气好的数据
-# 查询天气好的数据
+# # Step 1: 查询天气好的数据
+# # 查询天气好的数据
 # good_weather = get_data(['☀️', '🌤️'], 'weather')
 #
 # # 筛选天气好的日期
@@ -187,7 +195,7 @@ def get_data(data_names, csv_filename):
 # wea=get_data(None,'pollution')
 # # print(pollution[0])
 # print(wea)
-
+#
 # get_data('Good', 'weather')
 # get_data('Good', 'weather')
 # # print(know_data(final_result[0].keys(),'events'))

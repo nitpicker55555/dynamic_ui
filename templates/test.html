@@ -3,252 +3,193 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weather and Activity Dashboard</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <title>Path Planning Results</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #121212;
-            color: #ffffff;
             margin: 0;
             padding: 0;
         }
-        .container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-            padding: 20px;
-        }
-        .card {
-            background-color: #1e1e1e;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            overflow: hidden;
-            transition: transform 0.2s;
-        }
-        .card:hover {
-            transform: scale(1.05);
-        }
-        .highlight {
-            background-color: #ffeb3b;
-            color: #000;
-        }
-        .calendar {
+
+        #panel {
+            width: 100%;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            flex-direction: column;
+        }
+
+        #routeInfo {
+            display: flex;
+            justify-content: space-around;
             padding: 10px;
-            border-bottom: 1px solid #333;
+            background: #f4f4f4;
         }
-        .calendar span {
+
+        .info-box {
+            text-align: center;
+        }
+
+        .info-box span {
+            display: block;
             font-size: 1.2em;
+            font-weight: bold;
         }
-        .content {
-            padding: 20px;
+
+        #map {
+            height: 80vh;
+            width: 100%;
+            margin: 10px 0;
+            opacity: 0.9;
         }
-        .map {
-            height: 200px;
+
+        #rankButtons {
+            display: flex;
+            justify-content: center;
+            margin: 10px;
         }
-        .emoji {
-            font-size: 2em;
+
+        .rank-btn {
+            margin: 0 5px;
+            padding: 10px 15px;
+            background: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .rank-btn.active {
+            background: #0056b3;
+        }
+
+        .rank-btn:hover {
+            background: #0066cc;
+        }
+
+        .popup {
+            font-size: 1em;
         }
     </style>
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 </head>
 <body>
-<div class="container">
-    <!-- Weather and Pollution Data -->
-    <div class="card">
-        <div class="calendar">
-            <span class="emoji">📅</span>
-            <span id="weather-date"></span>
+<div id="panel">
+    <!-- Buttons for Route Ranking -->
+    <div id="rankButtons">
+        <button class="rank-btn" onclick="showRoute(1)" id="rank1">Rank 1</button>
+        <button class="rank-btn" onclick="showRoute(2)" id="rank2">Rank 2</button>
+        <button class="rank-btn" onclick="showRoute(3)" id="rank3">Rank 3</button>
+    </div>
+
+    <!-- Route Information -->
+    <div id="routeInfo">
+        <div class="info-box">
+            <span id="totalDistance">0 m</span>
+            Total Distance
         </div>
-        <div class="content">
-            <p>Weather: <span id="weather-emoji"></span></p>
-            <p>Temperature: <span id="temperature"></span>°C</p>
-            <p>Wind Speed: <span id="wind-speed"></span> km/h</p>
-            <p>Pollution: <span id="pollution-condition"></span></p>
+        <div class="info-box">
+            <span id="totalDuration">0 sec</span>
+            Total Duration
+        </div>
+        <div class="info-box">
+            <span id="avgVelocity">0 m/s</span>
+            Average Velocity
         </div>
     </div>
 
-    <!-- Activities -->
-    <div id="activities-container"></div>
+    <!-- Map Container -->
+    <div id="map"></div>
 </div>
 
+<!-- Leaflet.js -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
 <script>
-    const searched_result = [
-        {"city": "Aarhus", "title": "International Playgroup", "price": 0, "library": "Hovedbiblioteket", "longitude": 10.200179, "latitude": 56.156617, "date": "2014-08-15"},
-        {"city": "Aarhus", "title": "Mandagsfilm i bÃ¸rnebiblioteket", "price": 0, "library": "Hovedbiblioteket", "longitude": 10.200179, "latitude": 56.156617, "date": "2014-08-04"},
-        {"city": "Aarhus V", "title": "Forfatterspirer - SAXOs forfatterklub", "price": 0, "library": "Hasle Bibliotek", "longitude": 10.167345, "latitude": 56.179458, "date": "2014-08-04"},
-        {"city": "Aarhus", "title": "International Playgroup", "price": 0, "library": "Hovedbiblioteket", "longitude": 10.200179, "latitude": 56.156617, "date": "2014-08-01"},
-        {"city": "Viby J", "title": "Artmoney â?penge med dobbeltvÃ¦rdi ", "price": 0, "library": "Viby Bibliotek", "longitude": 10.164431, "latitude": 56.130402, "date": "2014-08-01"},
-        {"city": "Viby J", "title": "Bustur til Store Bogdag ved Hald Hovedgaard lÃ¸rdag 9. august", "price": 110, "library": "Viby Bibliotek", "longitude": 10.164431, "latitude": 56.130402, "date": "2014-08-09"},
-        {"city": "Aarhus", "title": "ByggelÃ¸rdag", "price": 0, "library": "Hovedbiblioteket", "longitude": 10.200179, "latitude": 56.156617, "date": "2014-08-09"}
-    ];
-    const pollution_data = [
-        {"date": "2014-08-01", "average_particullate_matter": 66.81935854356952, "pollution_condition": "Good"},
-        {"date": "2014-08-02", "average_particullate_matter": 80.37908314773571, "pollution_condition": "Good"},
-        {"date": "2014-08-03", "average_particullate_matter": 91.33991431576344, "pollution_condition": "Good"},
-        {"date": "2014-08-04", "average_particullate_matter": 99.42586148230636, "pollution_condition": "Good"},
-        {"date": "2014-08-05", "average_particullate_matter": 105.38195991091314, "pollution_condition": "Unhealthy"},
-        {"date": "2014-08-06", "average_particullate_matter": 108.35381093788666, "pollution_condition": "Unhealthy"},
-        {"date": "2014-08-07", "average_particullate_matter": 110.84666542934916, "pollution_condition": "Unhealthy"},
-        {"date": "2014-08-08", "average_particullate_matter": 112.6560257362039, "pollution_condition": "Unhealthy"},
-        {"date": "2014-08-09", "average_particullate_matter": 66.81935854356952, "pollution_condition": "Good"},
-        {"date": "2014-08-10", "average_particullate_matter": 114.32433958178667, "pollution_condition": "Unhealthy"},
-        {"date": "2014-08-11", "average_particullate_matter": 114.97595737441227, "pollution_condition": "Unhealthy"},
-        {"date": "2014-08-12", "average_particullate_matter": 115.01903148973028, "pollution_condition": "Unhealthy"},
-        {"date": "2014-08-13", "average_particullate_matter": 113.60746102449887, "pollution_condition": "Unhealthy"},
-        {"date": "2014-08-14", "average_particullate_matter": 112.14771250927988, "pollution_condition": "Unhealthy"},
-        {"date": "2014-08-15", "average_particullate_matter": 66.81935854356952, "pollution_condition": "Good"},
-        {"date": "2014-08-16", "average_particullate_matter": 110.57477264291016, "pollution_condition": "Unhealthy"},
-        {"date": "2014-08-17", "average_particullate_matter": 113.3337973273942, "pollution_condition": "Unhealthy"},
-        {"date": "2014-08-18", "average_particullate_matter": 115.7442078074734, "pollution_condition": "Unhealthy"},
-        {"date": "2014-08-19", "average_particullate_matter": 115.92222686216284, "pollution_condition": "Unhealthy"},
-        {"date": "2014-08-20", "average_particullate_matter": 117.02104986389509, "pollution_condition": "Unhealthy"},
-        {"date": "2014-08-21", "average_particullate_matter": 113.32641982182628, "pollution_condition": "Unhealthy"},
-        {"date": "2014-08-22", "average_particullate_matter": 66.81935854356952, "pollution_condition": "Good"},
-        {"date": "2014-08-23", "average_particullate_matter": 114.55720273447167, "pollution_condition": "Unhealthy"},
-        {"date": "2014-08-24", "average_particullate_matter": 115.23164903489234, "pollution_condition": "Unhealthy"},
-        {"date": "2014-08-25", "average_particullate_matter": 114.21977852016828, "pollution_condition": "Unhealthy"},
-        {"date": "2014-08-26", "average_particullate_matter": 116.10501732244497, "pollution_condition": "Unhealthy"},
-        {"date": "2014-08-27", "average_particullate_matter": 117.7142492576095, "pollution_condition": "Unhealthy"},
-        {"date": "2014-08-28", "average_particullate_matter": 114.5087617545162, "pollution_condition": "Unhealthy"},
-        {"date": "2014-08-29", "average_particullate_matter": 114.9814789037367, "pollution_condition": "Unhealthy"},
-        {"date": "2014-08-30", "average_particullate_matter": 114.79759032417718, "pollution_condition": "Unhealthy"},
-        {"date": "2014-08-31", "average_particullate_matter": 118.4754469809453, "pollution_condition": "Unhealthy"},
-        {"date": "2014-09-01", "average_particullate_matter": 119.6681901138332, "pollution_condition": "Unhealthy"},
-        {"date": "2014-09-02", "average_particullate_matter": 120.34119803266518, "pollution_condition": "Unhealthy"},
-        {"date": "2014-09-03", "average_particullate_matter": 117.8618844345459, "pollution_condition": "Unhealthy"},
-        {"date": "2014-09-04", "average_particullate_matter": 115.7634403612967, "pollution_condition": "Unhealthy"},
-        {"date": "2014-09-05", "average_particullate_matter": 114.69497803761446, "pollution_condition": "Unhealthy"},
-        {"date": "2014-09-06", "average_particullate_matter": 115.93497123236824, "pollution_condition": "Unhealthy"},
-        {"date": "2014-09-07", "average_particullate_matter": 115.90604893590697, "pollution_condition": "Unhealthy"},
-        {"date": "2014-09-08", "average_particullate_matter": 114.18689680772086, "pollution_condition": "Unhealthy"},
-        {"date": "2014-09-09", "average_particullate_matter": 111.43518776292996, "pollution_condition": "Unhealthy"},
-        {"date": "2014-09-10", "average_particullate_matter": 112.76928668646374, "pollution_condition": "Unhealthy"},
-        {"date": "2014-09-11", "average_particullate_matter": 112.58236667903984, "pollution_condition": "Unhealthy"},
-        {"date": "2014-09-12", "average_particullate_matter": 111.58464024993812, "pollution_condition": "Unhealthy"},
-        {"date": "2014-09-13", "average_particullate_matter": 66.81935854356952, "pollution_condition": "Good"},
-        {"date": "2014-09-14", "average_particullate_matter": 110.20188381588716, "pollution_condition": "Unhealthy"},
-        {"date": "2014-09-15", "average_particullate_matter": 111.26392755506062, "pollution_condition": "Unhealthy"},
-        {"date": "2014-09-16", "average_particullate_matter": 109.3392647240782, "pollution_condition": "Unhealthy"},
-        {"date": "2014-09-17", "average_particullate_matter": 110.61387960900768, "pollution_condition": "Unhealthy"},
-        {"date": "2014-09-18", "average_particullate_matter": 114.75792656520665, "pollution_condition": "Unhealthy"},
-        {"date": "2014-09-19", "average_particullate_matter": 116.25957374412272, "pollution_condition": "Unhealthy"},
-        {"date": "2014-09-20", "average_particullate_matter": 115.90875556792874, "pollution_condition": "Unhealthy"},
-        {"date": "2014-09-21", "average_particullate_matter": 117.11045378619154, "pollution_condition": "Unhealthy"},
-        {"date": "2014-09-22", "average_particullate_matter": 116.88960807968326, "pollution_condition": "Unhealthy"},
-        {"date": "2014-09-23", "average_particullate_matter": 115.45029076961148, "pollution_condition": "Unhealthy"},
-        {"date": "2014-09-24", "average_particullate_matter": 115.60388827023014, "pollution_condition": "Unhealthy"},
-        {"date": "2014-09-25", "average_particullate_matter": 113.8519472284088, "pollution_condition": "Unhealthy"},
-        {"date": "2014-09-26", "average_particullate_matter": 111.65567774065823, "pollution_condition": "Unhealthy"},
-        {"date": "2014-09-27", "average_particullate_matter": 112.37465973768867, "pollution_condition": "Unhealthy"},
-        {"date": "2014-09-28", "average_particullate_matter": 113.68006836179164, "pollution_condition": "Unhealthy"},
-        {"date": "2014-09-29", "average_particullate_matter": 114.92324764909677, "pollution_condition": "Unhealthy"},
-        {"date": "2014-09-30", "average_particullate_matter": 113.1759899343418, "pollution_condition": "Unhealthy"},
-        {"date": "2014-10-01", "average_particullate_matter": 111.90848214285714, "pollution_condition": "Unhealthy"}
-    ];
-    const weather_data = [
-        {"date": "2014-08-01", "weather": "☀️", "average_temperature": 21.4, "average_wind_speed": 10.1},
-        {"date": "2014-08-02", "weather": "☀️", "average_temperature": 22.7, "average_wind_speed": 16.8},
-        {"date": "2014-08-03", "weather": "🌧️", "average_temperature": 21.8, "average_wind_speed": 9.4},
-        {"date": "2014-08-04", "weather": "🌤️", "average_temperature": 19.4, "average_wind_speed": 10.7},
-        {"date": "2014-08-05", "weather": "🌧️", "average_temperature": 17.8, "average_wind_speed": 5.1},
-        {"date": "2014-08-06", "weather": "🌤️", "average_temperature": 18.5, "average_wind_speed": 8.3},
-        {"date": "2014-08-07", "weather": "🌤️", "average_temperature": 18.9, "average_wind_speed": 6.6},
-        {"date": "2014-08-08", "weather": "🌤️", "average_temperature": 19.5, "average_wind_speed": 7.7},
-        {"date": "2014-08-09", "weather": "🌤️", "average_temperature": 18.7, "average_wind_speed": 15.4},
-        {"date": "2014-08-10", "weather": "🌤️", "average_temperature": 19.3, "average_wind_speed": 14.8},
-        {"date": "2014-08-11", "weather": "🌤️", "average_temperature": 18.6, "average_wind_speed": 16.4},
-        {"date": "2014-08-12", "weather": "❄️", "average_temperature": 16.5, "average_wind_speed": 13.0},
-        {"date": "2014-08-13", "weather": "🌧️", "average_temperature": 15.5, "average_wind_speed": 9.7},
-        {"date": "2014-08-14", "weather": "🌤️", "average_temperature": 16.8, "average_wind_speed": 12.0},
-        {"date": "2014-08-15", "weather": "🌤️", "average_temperature": 16.5, "average_wind_speed": 13.6},
-        {"date": "2014-08-16", "weather": "❄️", "average_temperature": 14.8, "average_wind_speed": 20.7},
-        {"date": "2014-08-17", "weather": "🌧️", "average_temperature": 14.5, "average_wind_speed": 11.8},
-        {"date": "2014-08-18", "weather": "❄️", "average_temperature": 14.1, "average_wind_speed": 15.3},
-        {"date": "2014-08-19", "weather": "❄️", "average_temperature": 13.9, "average_wind_speed": 22.5},
-        {"date": "2014-08-20", "weather": "❄️", "average_temperature": 14.5, "average_wind_speed": 23.1},
-        {"date": "2014-08-21", "weather": "❄️", "average_temperature": 13.6, "average_wind_speed": 16.3},
-        {"date": "2014-08-22", "weather": "❄️", "average_temperature": 13.8, "average_wind_speed": 11.9},
-        {"date": "2014-08-23", "weather": "❄️", "average_temperature": 13.4, "average_wind_speed": 13.3},
-        {"date": "2014-08-24", "weather": "❄️", "average_temperature": 12.6, "average_wind_speed": 18.8},
-        {"date": "2014-08-25", "weather": "❄️", "average_temperature": 13.5, "average_wind_speed": 18.2},
-        {"date": "2014-08-26", "weather": "❄️", "average_temperature": 14.2, "average_wind_speed": 10.8},
-        {"date": "2014-08-27", "weather": "❄️", "average_temperature": 14.7, "average_wind_speed": 10.4},
-        {"date": "2014-08-28", "weather": "❄️", "average_temperature": 14.6, "average_wind_speed": 8.6},
-        {"date": "2014-08-29", "weather": "🌧️", "average_temperature": 14.8, "average_wind_speed": 8.5},
-        {"date": "2014-08-30", "weather": "🌧️", "average_temperature": 15.1, "average_wind_speed": 9.4},
-        {"date": "2014-08-31", "weather": "🌧️", "average_temperature": 15.4, "average_wind_speed": 15.1},
-        {"date": "2014-09-01", "weather": "🌤️", "average_temperature": 16.2, "average_wind_speed": 13.9},
-        {"date": "2014-09-02", "weather": "❄️", "average_temperature": 15.5, "average_wind_speed": 5.6},
-        {"date": "2014-09-03", "weather": "❄️", "average_temperature": 14.7, "average_wind_speed": 5.8},
-        {"date": "2014-09-04", "weather": "❄️", "average_temperature": 14.3, "average_wind_speed": 7.3},
-        {"date": "2014-09-05", "weather": "🌧️", "average_temperature": 14.3, "average_wind_speed": 8.3},
-        {"date": "2014-09-06", "weather": "🌤️", "average_temperature": 18.6, "average_wind_speed": 12.5},
-        {"date": "2014-09-07", "weather": "🌧️", "average_temperature": 17.4, "average_wind_speed": 7.7},
-        {"date": "2014-09-08", "weather": "🌧️", "average_temperature": 13.5, "average_wind_speed": 11.5},
-        {"date": "2014-09-09", "weather": "🌧️", "average_temperature": 15.2, "average_wind_speed": 21.6},
-        {"date": "2014-09-10", "weather": "🌧️", "average_temperature": 14.7, "average_wind_speed": 13.1},
-        {"date": "2014-09-11", "weather": "🌧️", "average_temperature": 15.8, "average_wind_speed": 10.2},
-        {"date": "2014-09-12", "weather": "🌧️", "average_temperature": 14.5, "average_wind_speed": 6.8},
-        {"date": "2014-09-13", "weather": "🌧️", "average_temperature": 15.7, "average_wind_speed": 10.6},
-        {"date": "2014-09-14", "weather": "🌧️", "average_temperature": 16.7, "average_wind_speed": 19.6},
-        {"date": "2014-09-15", "weather": "🌧️", "average_temperature": 16.8, "average_wind_speed": 20.3},
-        {"date": "2014-09-16", "weather": "🌤️", "average_temperature": 16.2, "average_wind_speed": 17.6},
-        {"date": "2014-09-17", "weather": "🌧️", "average_temperature": 15.2, "average_wind_speed": 13.9},
-        {"date": "2014-09-18", "weather": "🌧️", "average_temperature": 16.6, "average_wind_speed": 14.8},
-        {"date": "2014-09-19", "weather": "🌧️", "average_temperature": 14.9, "average_wind_speed": 10.9},
-        {"date": "2014-09-20", "weather": "🌧️", "average_temperature": 13.2, "average_wind_speed": 3.5},
-        {"date": "2014-09-21", "weather": "❄️", "average_temperature": 14.3, "average_wind_speed": 15.4},
-        {"date": "2014-09-22", "weather": "❄️", "average_temperature": 10.6, "average_wind_speed": 19.5},
-        {"date": "2014-09-23", "weather": "❄️", "average_temperature": 10.0, "average_wind_speed": 6.5},
-        {"date": "2014-09-24", "weather": "🌧️", "average_temperature": 12.8, "average_wind_speed": 9.5},
-        {"date": "2014-09-25", "weather": "❄️", "average_temperature": 12.4, "average_wind_speed": 18.2},
-        {"date": "2014-09-26", "weather": "🌧️", "average_temperature": 14.8, "average_wind_speed": 16.1},
-        {"date": "2014-09-27", "weather": "❄️", "average_temperature": 13.2, "average_wind_speed": 18.3},
-        {"date": "2014-09-28", "weather": "❄️", "average_temperature": 14.2, "average_wind_speed": 11.8},
-        {"date": "2014-09-29", "weather": "🌧️", "average_temperature": 15.3, "average_wind_speed": 7.5},
-        {"date": "2014-09-30", "weather": "❄️", "average_temperature": 14.1, "average_wind_speed": 10.0}
-    ];
+    const routes = [{'route_rank': 1, 'path': [{'REPORT_ID': 'WALKING', 'DURATION_IN_SEC': 53.0, 'POINT_1_LNG': 10.21284, 'POINT_1_LAT': 56.16184, 'POINT_2_LNG': 10.21197608217426, 'POINT_2_LAT': 56.161017815103236, 'VELOCITY': 2.0}, {'REPORT_ID': '190100', 'DURATION_IN_SEC': 202.0, 'POINT_1_LNG': 10.21197608217426, 'POINT_1_LAT': 56.161017815103236, 'POINT_2_LNG': 10.209599775463175, 'POINT_2_LAT': 56.14892750591274, 'VELOCITY': 7.4}, {'REPORT_ID': '179009', 'DURATION_IN_SEC': 49.0, 'POINT_1_LNG': 10.20872971106246, 'POINT_1_LAT': 56.144719132186395, 'POINT_2_LNG': 10.209599775463175, 'POINT_2_LAT': 56.14892750591274, 'VELOCITY': 9.7}, {'REPORT_ID': '206475', 'DURATION_IN_SEC': 48.0, 'POINT_1_LNG': 10.204415905418273, 'POINT_1_LAT': 56.14171141881423, 'POINT_2_LNG': 10.20872971106246, 'POINT_2_LAT': 56.144719132186395, 'VELOCITY': 9.9}, {'REPORT_ID': '179038', 'DURATION_IN_SEC': 36.0, 'POINT_1_LNG': 10.1989185595246, 'POINT_1_LAT': 56.14063267124548, 'POINT_2_LNG': 10.204415905418273, 'POINT_2_LAT': 56.14171141881423, 'VELOCITY': 10.0}, {'REPORT_ID': '206131', 'DURATION_IN_SEC': 62.0, 'POINT_1_LNG': 10.192723647815683, 'POINT_1_LAT': 56.1417522836526, 'POINT_2_LNG': 10.1989185595246, 'POINT_2_LAT': 56.14063267124548, 'VELOCITY': 8.1}, {'REPORT_ID': '206184', 'DURATION_IN_SEC': 72.0, 'POINT_1_LNG': 10.192723647815683, 'POINT_1_LAT': 56.1417522836526, 'POINT_2_LNG': 10.186632644180236, 'POINT_2_LAT': 56.13959744418457, 'VELOCITY': 10.3}, {'REPORT_ID': '190206', 'DURATION_IN_SEC': 46.0, 'POINT_1_LNG': 10.186632644180236, 'POINT_1_LAT': 56.13959744418457, 'POINT_2_LNG': 10.179150601188667, 'POINT_2_LAT': 56.13844851575673, 'VELOCITY': 11.1}, {'REPORT_ID': '184675', 'DURATION_IN_SEC': 89.0, 'POINT_1_LNG': 10.179150601188667, 'POINT_1_LAT': 56.13844851575673, 'POINT_2_LNG': 10.166163050262412, 'POINT_2_LAT': 56.131053962866226, 'VELOCITY': 12.9}, {'REPORT_ID': 'WALKING', 'DURATION_IN_SEC': 64.8, 'POINT_1_LNG': 10.166163050262412, 'POINT_1_LAT': 56.131053962866226, 'POINT_2_LNG': 10.164431, 'POINT_2_LAT': 56.130402, 'VELOCITY': 2.0}], 'total_duration': 721.7, 'total_distance': 5941.4, 'average_velocity': 8.2}, {'route_rank': 2, 'path': [{'REPORT_ID': 'WALKING', 'DURATION_IN_SEC': 53.0, 'POINT_1_LNG': 10.21284, 'POINT_1_LAT': 56.16184, 'POINT_2_LNG': 10.21197608217426, 'POINT_2_LAT': 56.161017815103236, 'VELOCITY': 2.0}, {'REPORT_ID': '190100', 'DURATION_IN_SEC': 202.0, 'POINT_1_LNG': 10.21197608217426, 'POINT_1_LAT': 56.161017815103236, 'POINT_2_LNG': 10.209599775463175, 'POINT_2_LAT': 56.14892750591274, 'VELOCITY': 7.4}, {'REPORT_ID': '179009', 'DURATION_IN_SEC': 49.0, 'POINT_1_LNG': 10.20872971106246, 'POINT_1_LAT': 56.144719132186395, 'POINT_2_LNG': 10.209599775463175, 'POINT_2_LAT': 56.14892750591274, 'VELOCITY': 9.7}, {'REPORT_ID': '206475', 'DURATION_IN_SEC': 48.0, 'POINT_1_LNG': 10.204415905418273, 'POINT_1_LAT': 56.14171141881423, 'POINT_2_LNG': 10.20872971106246, 'POINT_2_LAT': 56.144719132186395, 'VELOCITY': 9.9}, {'REPORT_ID': '179038', 'DURATION_IN_SEC': 36.0, 'POINT_1_LNG': 10.1989185595246, 'POINT_1_LAT': 56.14063267124548, 'POINT_2_LNG': 10.204415905418273, 'POINT_2_LAT': 56.14171141881423, 'VELOCITY': 10.0}, {'REPORT_ID': '206131', 'DURATION_IN_SEC': 62.0, 'POINT_1_LNG': 10.192723647815683, 'POINT_1_LAT': 56.1417522836526, 'POINT_2_LNG': 10.1989185595246, 'POINT_2_LAT': 56.14063267124548, 'VELOCITY': 8.1}, {'REPORT_ID': '206078', 'DURATION_IN_SEC': 62.0, 'POINT_1_LNG': 10.186880262565637, 'POINT_1_LAT': 56.14251885276732, 'POINT_2_LNG': 10.192723647815683, 'POINT_2_LAT': 56.1417522836526, 'VELOCITY': 8.4}, {'REPORT_ID': '184703', 'DURATION_IN_SEC': 60.0, 'POINT_1_LNG': 10.179336344162948, 'POINT_1_LAT': 56.138322977998705, 'POINT_2_LNG': 10.186880262565637, 'POINT_2_LAT': 56.14251885276732, 'VELOCITY': 11.0}, {'REPORT_ID': '184649', 'DURATION_IN_SEC': 93.0, 'POINT_1_LNG': 10.166318618385276, 'POINT_1_LAT': 56.13096577062022, 'POINT_2_LNG': 10.179336344162948, 'POINT_2_LAT': 56.138322977998705, 'VELOCITY': 12.4}, {'REPORT_ID': 'WALKING', 'DURATION_IN_SEC': 66.4, 'POINT_1_LNG': 10.166318618385276, 'POINT_1_LAT': 56.13096577062022, 'POINT_2_LNG': 10.164431, 'POINT_2_LAT': 56.130402, 'VELOCITY': 2.0}], 'total_duration': 731.3, 'total_distance': 5876.6, 'average_velocity': 8.0}, {'route_rank': 3, 'path': [{'REPORT_ID': 'WALKING', 'DURATION_IN_SEC': 47.1, 'POINT_1_LNG': 10.21284, 'POINT_1_LAT': 56.16184, 'POINT_2_LNG': 10.2121812711639, 'POINT_2_LAT': 56.16107681293822, 'VELOCITY': 2.0}, {'REPORT_ID': '182683', 'DURATION_IN_SEC': 75.0, 'POINT_1_LNG': 10.2121812711639, 'POINT_1_LAT': 56.16107681293822, 'POINT_2_LNG': 10.207060089618722, 'POINT_2_LAT': 56.16816672029917, 'VELOCITY': 11.3}, {'REPORT_ID': '187774', 'DURATION_IN_SEC': 90.0, 'POINT_1_LNG': 10.207060089618722, 'POINT_1_LAT': 56.16816672029917, 'POINT_2_LNG': 10.201380373016264, 'POINT_2_LAT': 56.17122707649042, 'VELOCITY': 7.1}, {'REPORT_ID': '180872', 'DURATION_IN_SEC': 43.0, 'POINT_1_LNG': 10.201380373016264, 'POINT_1_LAT': 56.17122707649042, 'POINT_2_LNG': 10.194338714120931, 'POINT_2_LAT': 56.16945046812791, 'VELOCITY': 11.2}, {'REPORT_ID': '180926', 'DURATION_IN_SEC': 67.0, 'POINT_1_LNG': 10.194338714120931, 'POINT_1_LAT': 56.16945046812791, 'POINT_2_LNG': 10.185844404928275, 'POINT_2_LAT': 56.163969409207326, 'VELOCITY': 12.1}, {'REPORT_ID': '180980', 'DURATION_IN_SEC': 45.0, 'POINT_1_LNG': 10.185844404928275, 'POINT_1_LAT': 56.163969409207326, 'POINT_2_LNG': 10.182659856483497, 'POINT_2_LAT': 56.15898299999999, 'VELOCITY': 13.4}, {'REPORT_ID': '181034', 'DURATION_IN_SEC': 38.0, 'POINT_1_LNG': 10.182659856483497, 'POINT_1_LAT': 56.15898299999999, 'POINT_2_LNG': 10.182616305557303, 'POINT_2_LAT': 56.15498346925998, 'VELOCITY': 11.8}, {'REPORT_ID': '181088', 'DURATION_IN_SEC': 43.0, 'POINT_1_LNG': 10.182616305557303, 'POINT_1_LAT': 56.15498346925998, 'POINT_2_LNG': 10.183499758266407, 'POINT_2_LAT': 56.149807565419565, 'VELOCITY': 13.5}, {'REPORT_ID': '181142', 'DURATION_IN_SEC': 37.0, 'POINT_1_LNG': 10.183499758266407, 'POINT_1_LAT': 56.149807565419565, 'POINT_2_LNG': 10.186762304229774, 'POINT_2_LAT': 56.14563850929, 'VELOCITY': 13.7}, {'REPORT_ID': '189994', 'DURATION_IN_SEC': 56.0, 'POINT_1_LNG': 10.186762304229774, 'POINT_1_LAT': 56.14563850929, 'POINT_2_LNG': 10.186756880950952, 'POINT_2_LAT': 56.14258759218248, 'VELOCITY': 8.0}, {'REPORT_ID': '184729', 'DURATION_IN_SEC': 55.0, 'POINT_1_LNG': 10.186756880950952, 'POINT_1_LAT': 56.14258759218248, 'POINT_2_LNG': 10.179150601188667, 'POINT_2_LAT': 56.13844851575673, 'VELOCITY': 12.0}, {'REPORT_ID': '184675', 'DURATION_IN_SEC': 89.0, 'POINT_1_LNG': 10.179150601188667, 'POINT_1_LAT': 56.13844851575673, 'POINT_2_LNG': 10.166163050262412, 'POINT_2_LAT': 56.131053962866226, 'VELOCITY': 12.9}, {'REPORT_ID': 'WALKING', 'DURATION_IN_SEC': 64.8, 'POINT_1_LNG': 10.166163050262412, 'POINT_1_LAT': 56.131053962866226, 'POINT_2_LNG': 10.164431, 'POINT_2_LAT': 56.130402, 'VELOCITY': 2.0}], 'total_duration': 749.8, 'total_distance': 7405.7, 'average_velocity': 9.9}]
 
-    const activitiesContainer = document.getElementById('activities-container');
+    let map = L.map('map').setView([56.16184, 10.21284], 14);
 
-    searched_result.forEach(activity => {
-        const card = document.createElement('div');
-        card.className = 'card highlight';
-        card.innerHTML = `
-                <div class="calendar">
-                    <span class="emoji">📅</span>
-                    <span>${activity.date}</span>
-                </div>
-                <div class="content">
-                    <p>City: ${activity.city}</p>
-                    <p>Title: ${activity.title}</p>
-                    <p>Price: ${activity.price === 0 ? 'Free' : activity.price}</p>
-                    <p>Library: ${activity.library}</p>
-                    <div id="map-${activity.date}" class="map"></div>
-                </div>
-            `;
-        activitiesContainer.appendChild(card);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+    }).addTo(map);
 
-        const map = L.map(`map-${activity.date}`).setView([activity.latitude, activity.longitude], 13);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-        }).addTo(map);
-        L.marker([activity.latitude, activity.longitude]).addTo(map)
-            .bindPopup(`<b>${activity.title}</b><br>${activity.library}`).openPopup();
+    let currentLayerGroup = null;
+
+    function showRoute(rank) {
+        if (currentLayerGroup) {
+            currentLayerGroup.clearLayers();
+        }
+
+        const route = routes.find(r => r.route_rank === rank);
+
+        if (!route) return;
+
+        document.getElementById('totalDistance').textContent = `${route.total_distance.toFixed(2)} m`;
+        document.getElementById('totalDuration').textContent = `${route.total_duration.toFixed(2)} sec`;
+        document.getElementById('avgVelocity').textContent = `${route.average_velocity.toFixed(2)} m/s`;
+
+        currentLayerGroup = L.layerGroup();
+
+        const startMarker = L.circleMarker([route.path[0].POINT_1_LAT, route.path[0].POINT_1_LNG], {
+            radius: 10,
+            color: '#00FF00',
+            fillColor: '#00FF00',
+            fillOpacity: 0.8
+        }).addTo(currentLayerGroup);
+        startMarker.bindPopup('Start Point', { className: 'popup' }).openPopup();
+
+        const endMarker = L.circleMarker([route.path[route.path.length - 1].POINT_2_LAT, route.path[route.path.length - 1].POINT_2_LNG], {
+            radius: 10,
+            color: '#FF0000',
+            fillColor: '#FF0000',
+            fillOpacity: 0.8
+        }).addTo(currentLayerGroup);
+        endMarker.bindPopup('End Point', { className: 'popup' }).openPopup();
+
+        route.path.forEach(segment => {
+            const { POINT_1_LAT, POINT_1_LNG, POINT_2_LAT, POINT_2_LNG, VELOCITY } = segment;
+
+            const color = getColorBasedOnVelocity(VELOCITY);
+
+            const line = L.polyline([
+                [POINT_1_LAT, POINT_1_LNG],
+                [POINT_2_LAT, POINT_2_LNG]
+            ], {
+                color,
+                weight: 8, // Thicker lines
+                opacity: 1
+            }).addTo(currentLayerGroup);
+
+            line.bindPopup(
+                `<div class='popup'>
+                        <strong>REPORT_ID:</strong> ${segment.REPORT_ID}<br>
+                        <strong>VELOCITY:</strong> ${VELOCITY} m/s<br>
+                        <strong>DURATION:</strong> ${segment.DURATION_IN_SEC} sec
+                    </div>`
+            );
+
+            line.on('mouseover', () => {
+                line.setStyle({ weight: 12 });
+            });
+
+            line.on('mouseout', () => {
+                line.setStyle({ weight: 8 });
+            });
+        });
+
+        currentLayerGroup.addTo(map);
+    }
+
+    function getColorBasedOnVelocity(velocity) {
+        const opacity = 1 - Math.min(velocity / 15, 1); // Higher velocity = lighter color
+        return `rgba(0, 0, 255, ${opacity})`;
+    }
+
+    // Load Rank 1 by default
+    document.addEventListener('DOMContentLoaded', () => {
+        showRoute(1);
+        document.getElementById('rank1').classList.add('active');
     });
-
-    const weather = weather_data[0];
-    const pollution = pollution_data[0];
-
-    document.getElementById('weather-date').textContent = weather.date;
-    document.getElementById('weather-emoji').textContent = weather.weather;
-    document.getElementById('temperature').textContent = weather.average_temperature;
-    document.getElementById('wind-speed').textContent = weather.average_wind_speed;
-    document.getElementById('pollution-condition').textContent = pollution.pollution_condition;
 </script>
 </body>
 </html>
