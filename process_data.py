@@ -30,7 +30,7 @@ def know_data( column_names,csv_file):
         if missing_columns:
             raise ValueError(f"以下列名不存在于CSV文件中: {missing_columns}")
 
-        result = {csv_file.replace(".csv",''):{}}
+        result = {csv_file.replace(".csv",'').split('/')[1]:{}}
 
         for column_name in column_names:
             # 获取列的数据类型
@@ -83,7 +83,7 @@ def know_data( column_names,csv_file):
                 data_range = list(sample_values) if len(sample_values) > 0 else (None, None)
                 data_range_string='sampled three data'
 
-            result[csv_file.replace(".csv",'')][column_name] = {
+            result[csv_file.replace(".csv",'').split('/')[1]][column_name] = {
                 'data_type': mapped_type,
                 data_range_string: data_range
             }
@@ -95,34 +95,51 @@ def know_data( column_names,csv_file):
         return {"error": f"文件 '{csv_file}' 未找到。"}
     except ValueError as e:
         return {"error": str(e)}
-    except Exception as e:
-        return {"error": f"发生未知错误: {e}"}
+
 
 
 def get_data(data_names, csv_filename):
     """
-    从CSV文件中查找数据名称并返回对应行的数据，返回格式为JSON。
+    从CSV文件中查找数据名称并返回对应行或列的数据，返回格式为JSON。
 
     :param data_names: 单个数据名称或数据名称列表
     :param csv_filename: CSV文件名（不含扩展名）
     :return: JSON格式的结果
     """
     # 确保 data_names 是列表
-    csv_filename=f"available_data/{csv_filename}.csv"
-
+    csv_filename = f"available_data/{csv_filename}.csv"
 
     try:
         # 读取CSV文件
         df = pd.read_csv(csv_filename, encoding='utf-8-sig')
 
-        # 如果 data_names 为空，返回所有数据
-        if not data_names:
-            raw_data = df.to_dict(orient='records')
-            print({"length": len(raw_data), "keys": list(df.columns)})
-            return raw_data
-
         if isinstance(data_names, str):
             data_names = [data_names]
+        if not data_names or len(data_names)==0:
+            raw_data = df.to_dict(orient='records')
+            data_intro = {"length": len(raw_data), "keys": list(df.columns)}
+            print(data_intro)
+            return raw_data
+        # 检查是否所有的 data_names 都是列名
+        if all(name in df.columns for name in data_names):
+            # 如果 data_names 是列名，返回指定的列
+            selected_columns = df[data_names]
+
+            # 检查是否有 'date' 列
+            if 'date' in df.columns:
+                selected_columns['date'] = df['date']
+            else:
+                print("Warning: 'date' column not found in the CSV file.")
+
+            # 数据简介
+            data_intro = {'length': len(selected_columns), 'keys': list(selected_columns.columns)}
+            print(data_intro)
+
+            # 返回包含 date 的结果
+            return selected_columns.to_dict(orient='records')
+
+        # 如果 data_names 为空，返回所有数据
+
 
         # 查找包含指定数据名称的行
         matched_rows = df[df.apply(lambda row: any(data_name in row.values for data_name in data_names), axis=1)]
@@ -142,6 +159,7 @@ def get_data(data_names, csv_filename):
         return json.dumps({"error": "CSV file not found."}, ensure_ascii=False)
     except Exception as e:
         return json.dumps({"error": str(e)}, ensure_ascii=False)
+
 
     # except Exception as e:
     #     return json.dumps({"error": str(e)}, ensure_ascii=False)
