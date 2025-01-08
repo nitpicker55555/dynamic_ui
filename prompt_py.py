@@ -20,7 +20,7 @@ def get_html_generate_prompt(query,searched_result,other_results,variables,route
     Route Ranking Display:
     
     The path planning results are composed of routes grouped by THREE different ranks, other two ranks also need to display.
-    Include buttons or toggles to switch between the display of different rank routes.
+    Include buttons or toggles to switch between the display of different rank routes. 注意确保在切换路线时不会重复初始化地图容器。
     Route Overview Details:
     
     For each rank, display the following aggregate metrics:
@@ -65,7 +65,7 @@ def get_html_generate_prompt(query,searched_result,other_results,variables,route
 
     Tooltips or pop-up bubbles to display detailed information (e.g., map data)(Ensure the popup bubble is on the topmost layer.).
 
-    Leaflet integration for map-related features (Leaflet opacity: 0.5).
+    Leaflet integration for map-related features (Leaflet opacity: 0.5). 
     Ensure the layout is contained within a manageable-sized container, suitable for embedding in larger layouts.
     
     adhering strictly to the provided variable names: {variables}. The HTML page must dynamically adjust its content based on the variable values, meaning replacing these values will automatically update the display.
