@@ -19,7 +19,7 @@ def get_html_generate_prompt(query,searched_result,other_results,variables,route
     
     Route Ranking Display:
     
-    The path planning results are composed of routes grouped by three different ranks.
+    The path planning results are composed of routes grouped by THREE different ranks, other two ranks also need to display.
     Include buttons or toggles to switch between the display of different rank routes.
     Route Overview Details:
     
@@ -35,10 +35,11 @@ def get_html_generate_prompt(query,searched_result,other_results,variables,route
     DURATION_IN_SEC
     Path Visualization:
     
-    Draw each route segment by connecting its POINT_1 and POINT_2 using straight lines (based on their latitude and longitude).
-    Assign colors to each segment based on its VELOCITY:
-    Higher velocity = lighter color.
-    Lower velocity = darker color.
+    Draw each route segment by connecting its POINT_1 and POINT_2 using width 18 pixels straight lines (based on their latitude and longitude).
+    Assign transparent value to each segment based on its VELOCITY (color red):
+    Higher velocity = Lower transparent.
+    Lower velocity = Higher transparent.
+    
     Ensure the panel design is user-friendly, clearly labeled, and effectively communicates the information.
     And also show Start node and End node in map.
         """
@@ -64,7 +65,7 @@ def get_html_generate_prompt(query,searched_result,other_results,variables,route
 
     Tooltips or pop-up bubbles to display detailed information (e.g., map data)(Ensure the popup bubble is on the topmost layer.).
 
-    Leaflet integration for map-related features.
+    Leaflet integration for map-related features (Leaflet opacity: 0.5).
     Ensure the layout is contained within a manageable-sized container, suitable for embedding in larger layouts.
     
     adhering strictly to the provided variable names: {variables}. The HTML page must dynamically adjust its content based on the variable values, meaning replacing these values will automatically update the display.
