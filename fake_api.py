@@ -6,23 +6,25 @@ import time
 def message_template(role,new_info):
     new_dict={'role':role,'content':new_info}
     return new_dict
-def api_answer(messages,json_format=False):
+def api_answer(messages,mode=""):
     conn = http.client.HTTPSConnection("api.openai-hub.com")
-    payload = json.dumps({
-        "model": "gpt-4o",
-        "messages": messages
-    })
-    if json_format:
-        headers = {
-            'Authorization': 'Bearer sk-Nf0kLEmbRPRSFdD8qwlg1e7EHuoJMyaf1Z60Fh0IDLYosBEs',
-            'Content-Type': 'json'
-        }
-    else:
+    headers = {
+        'Authorization': 'Bearer sk-Nf0kLEmbRPRSFdD8qwlg1e7EHuoJMyaf1Z60Fh0IDLYosBEs',
+        'Content-Type': 'application/json'
+    }
 
-        headers = {
-            'Authorization': 'Bearer sk-Nf0kLEmbRPRSFdD8qwlg1e7EHuoJMyaf1Z60Fh0IDLYosBEs',
-            'Content-Type': 'application/json'
-        }
+    if mode=='json':
+        payload = json.dumps({
+            "model": "gpt-4o",
+            "messages": messages,
+            "response_format": {"type": "json_object"}
+        })
+    else:
+        payload = json.dumps({
+            "model": "gpt-4o",
+            "messages": messages,
+
+        })
     # conn.request("POST", "/v1/chat/completions", payload, headers)
     # res = conn.getresponse()
     # data = res.read()

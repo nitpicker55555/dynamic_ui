@@ -2,7 +2,7 @@ import csv
 import math
 import networkx as nx
 
-csv_file = r"/available_data/trafficMetaData.csv"
+csv_file = r"available_data/trafficMetaData.csv"
 
 
 def round_json_values(data):
