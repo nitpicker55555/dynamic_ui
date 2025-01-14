@@ -4,9 +4,9 @@ def get_html_generate_prompt(query,searched_result,other_results,variables,route
 
     if other_results!="":
         other_results_str=f"""
-            other_results,displayed in a dark-themed style:
+
     {other_results}
-        Highlighted styling for searched_result data, with other_results styled in a darker theme.
+        Highlighted styling for searched_result data,other results also need to be displayed
         """
     else:
         other_results_str=''
@@ -65,7 +65,6 @@ def get_html_generate_prompt(query,searched_result,other_results,variables,route
 
     Tooltips or pop-up bubbles to display detailed information (e.g., map data)(Ensure the popup bubble is on the topmost layer.).
 
-    Leaflet integration for map-related features (Leaflet opacity: 0.5). 
     Ensure the layout is contained within a manageable-sized container, suitable for embedding in larger layouts.
     
     adhering strictly to the provided variable names: {variables}. The HTML page must dynamically adjust its content based on the variable values, meaning replacing these values will automatically update the display.

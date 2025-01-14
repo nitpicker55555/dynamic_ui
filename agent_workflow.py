@@ -3,6 +3,7 @@ from fake_api import *
 # from azure_api import *
 from process_data import *
 import re
+from html_demo import *
 from math import radians, cos, sin, sqrt, atan2
 from geopy.distance import geodesic
 def update_js_arrays(html_content, replacements):
@@ -120,7 +121,11 @@ def html_generate_agent(query,searched_result,other_result,route_plan):
     print("html_prompt", html_prompt)
     messages.append(message_template('system',html_prompt))
     messages.append(message_template('user',query))
-    html_generate_agent_response=api_answer(messages)
+    template_judge_result=judge_template_agent(query)
+    if template_judge_result:
+        html_generate_agent_response=template_judge_result
+    else:
+        html_generate_agent_response=api_answer(messages)
     replacements_list=[]
     replacements_list.append({'variable':"searched_result","value":searched_result})
     for var_name in other_result:
@@ -129,6 +134,33 @@ def html_generate_agent(query,searched_result,other_result,route_plan):
     replacements_json =json.dumps(replacements_list)
     new_html=update_js_arrays(html_generate_agent_response,replacements_json)
     return new_html,html_generate_agent_response,replacements_json
+
+def judge_template_agent(query):
+    messages=[]
+    system_prompt="""
+Help me select the most similar query to the user's query from the following options, and return the result in JSON format: {”selection“:""}
+
+Options:
+
+"What activities are available when the weather is good and pollution is low?"
+"The relationship between the amount of pollutants and temperature."
+"Route planning from point A to point B."
+"None of the above."
+
+Note: It is sufficient if the type of question is similar.
+    """
+    selction_json={
+        "What activities are available when the weather is good and pollution is low?":events_html_code,
+        "The relationship between the amount of pollutants and temperature.":charts_html_code,
+        "Route planning from point A to point B.":route_html_code,
+        "5 closet place address of a certain address":closet_address,
+        "None of the above.":None
+    }
+    messages.append(message_template('system',system_prompt))
+    messages.append(message_template('user',query))
+    judge_template_agent_response=json.loads(api_answer(messages,'json'))
+    selected_html=selction_json[judge_template_agent_response['selection']]
+    return selected_html
 
 def generate_response(query):
     code_sample = """```python
@@ -173,5 +205,6 @@ for date in good_weather_low_pollution_dates:
     new_html,html_generate_agent_response,replacements_json = html_generate_agent(query, searched_result, other_result,route_plan)
     print(new_html)
     return new_html,html_generate_agent_response,replacements_json
-# generate_response('我想知道名为NORREPORT的停车场到名为Viby Bibliotek的活动的路线规划')
+
+generate_response('I want to know 5 closet parking address near Tilst Bibliotek')
 # resuls=get_data(['2014-08-02', '2014-08-09', '2014-08-15', '2014-08-01', '2014-08-04'],'events')
