@@ -6,6 +6,8 @@ import re
 from html_demo import *
 from math import radians, cos, sin, sqrt, atan2
 from geopy.distance import geodesic
+
+local_namespace = {}
 def update_js_arrays(html_content, replacements):
     """
     批量更新 HTML/JavaScript 中数组的内容，并保持 JSON 格式的元素为合法的 JSON。
@@ -66,7 +68,8 @@ def run_code_from_string(code_str):
     code_str = code_str.strip()
 
     # 执行代码
-    local_namespace = {}
+
+    print(code_str)
 
     # 执行代码
     exec(code_str, globals(), local_namespace)
@@ -144,6 +147,7 @@ Options:
 
 "What activities are available when the weather is good and pollution is low?"
 "The relationship between the amount of pollutants and temperature."
+"5 closet place address of a certain address"
 "Route planning from point A to point B."
 "None of the above."
 
@@ -208,3 +212,28 @@ for date in good_weather_low_pollution_dates:
 
 # generate_response('I want to know 5 closet parking address near Tilst Bibliotek')
 # resuls=get_data(['2014-08-02', '2014-08-09', '2014-08-15', '2014-08-01', '2014-08-04'],'events')
+# code_str="""
+# viby_bibliotek_location = get_data(['Viby Bibliotek'], 'events')
+#
+# # Extract the longitude and latitude of Viby Bibliotek.
+# viby_bibliotek_longitude = viby_bibliotek_location[0]['longitude']
+# viby_bibliotek_latitude = viby_bibliotek_location[0]['latitude']
+#
+# # Retrieve all parking data from the parking database.
+# all_parking_data = get_data([], 'parking')
+#
+# # Calculate the distance from Viby Bibliotek for each parking garage.
+# def calculate_distance(parking):
+#     return ((parking['longitude'] - viby_bibliotek_longitude) ** 2 + (parking['latitude'] - viby_bibliotek_latitude) ** 2) ** 0.5
+#
+# # Attach distance to each parking data.
+# for parking in all_parking_data:
+#     parking['distance'] = calculate_distance(parking)
+#
+# # Sort parking data by distance and get the closest 5 parking garages.
+# closest_parking_data = sorted(all_parking_data, key=lambda x: x['distance'])[:5]
+#
+# # Store the result in searched_result
+# searched_result = closest_parking_data
+# """
+# run_code_from_string(code_str)

@@ -4,200 +4,78 @@ charts_html_code="""
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Relationship between Pollutant amount and Weather Temperature</title>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            background-color: #f4f4f9;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .container {
-            background: #fff;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            width: 80%;
-            max-width: 800px;
-        }
-        canvas {
-            border-radius: 8px;
-        }
-        .tooltip {
-            position: absolute;
-            background: #333;
-            color: #fff;
-            border-radius: 4px;
-            padding: 5px;
-            font-size: 12px;
-            pointer-events: none;
-            z-index: 100;
-            display: none;
-        }
-
-        .tooltip::after {
-            content: ' ';
-            position: absolute;
-            top: 100%;
-            left: 50%;
-            margin-left: -5px;
-            border-width: 5px;
-            border-style: solid;
-            border-color: #333 transparent transparent transparent;
-        }
-    </style>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Dynamic Plotly Chart</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 <body>
-
-<div class="container">
-    <canvas id="lineChart"></canvas>
-    <div id="tooltip" class="tooltip"></div>
-</div>
+<h1>Dynamic Chart Viewer</h1>
+<div id="chart" style="width:100%;height:600px;"></div>
 
 <script>
+    // 输入数据
     const searched_result = [
-        {"date": "2014-08-01", "average_particullate_matter": 66.81935854356952, "average_temperature": 21.4},
-        {"date": "2014-08-02", "average_particullate_matter": 80.37908314773571, "average_temperature": 22.7},
-        {"date": "2014-08-03", "average_particullate_matter": 91.33991431576344, "average_temperature": 21.8},
-        {"date": "2014-08-04", "average_particullate_matter": 99.42586148230636, "average_temperature": 19.4},
-        {"date": "2014-08-05", "average_particullate_matter": 105.38195991091314, "average_temperature": 17.8},
-        {"date": "2014-08-06", "average_particullate_matter": 108.35381093788666, "average_temperature": 18.5},
-        {"date": "2014-08-07", "average_particullate_matter": 110.84666542934916, "average_temperature": 18.9},
-        {"date": "2014-08-08", "average_particullate_matter": 112.6560257362039, "average_temperature": 19.5},
-        {"date": "2014-08-09", "average_particullate_matter": 66.81935854356952, "average_temperature": 18.7},
-        {"date": "2014-08-10", "average_particullate_matter": 114.32433958178667, "average_temperature": 19.3},
-        {"date": "2014-08-11", "average_particullate_matter": 114.97595737441227, "average_temperature": 18.6},
-        {"date": "2014-08-12", "average_particullate_matter": 115.01903148973028, "average_temperature": 16.5},
-        {"date": "2014-08-13", "average_particullate_matter": 113.60746102449887, "average_temperature": 15.5},
-        {"date": "2014-08-14", "average_particullate_matter": 112.14771250927988, "average_temperature": 16.8},
-        {"date": "2014-08-15", "average_particullate_matter": 66.81935854356952, "average_temperature": 16.5},
-        {"date": "2014-08-16", "average_particullate_matter": 110.57477264291016, "average_temperature": 14.8},
-        {"date": "2014-08-17", "average_particullate_matter": 113.3337973273942, "average_temperature": 14.5},
-        {"date": "2014-08-18", "average_particullate_matter": 115.7442078074734, "average_temperature": 14.1},
-        {"date": "2014-08-19", "average_particullate_matter": 115.92222686216284, "average_temperature": 13.9},
-        {"date": "2014-08-20", "average_particullate_matter": 117.02104986389509, "average_temperature": 14.5},
-        {"date": "2014-08-21", "average_particullate_matter": 113.32641982182628, "average_temperature": 13.6},
-        {"date": "2014-08-22", "average_particullate_matter": 66.81935854356952, "average_temperature": 13.8},
-        {"date": "2014-08-23", "average_particullate_matter": 114.55720273447167, "average_temperature": 13.4},
-        {"date": "2014-08-24", "average_particullate_matter": 115.23164903489234, "average_temperature": 12.6},
-        {"date": "2014-08-25", "average_particullate_matter": 114.21977852016828, "average_temperature": 13.5},
-        {"date": "2014-08-26", "average_particullate_matter": 116.10501732244497, "average_temperature": 14.2},
-        {"date": "2014-08-27", "average_particullate_matter": 117.7142492576095, "average_temperature": 14.7},
-        {"date": "2014-08-28", "average_particullate_matter": 114.5087617545162, "average_temperature": 14.6},
-        {"date": "2014-08-29", "average_particullate_matter": 114.9814789037367, "average_temperature": 14.8},
-        {"date": "2014-08-30", "average_particullate_matter": 114.79759032417718, "average_temperature": 15.1},
-        {"date": "2014-08-31", "average_particullate_matter": 118.4754469809453, "average_temperature": 15.4},
-        {"date": "2014-09-01", "average_particullate_matter": 119.6681901138332, "average_temperature": 16.2},
-        {"date": "2014-09-02", "average_particullate_matter": 120.34119803266518, "average_temperature": 15.5},
-        {"date": "2014-09-03", "average_particullate_matter": 117.8618844345459, "average_temperature": 14.7},
-        {"date": "2014-09-04", "average_particullate_matter": 115.7634403612967, "average_temperature": 14.3},
-        {"date": "2014-09-05", "average_particullate_matter": 114.69497803761446, "average_temperature": 14.3},
-        {"date": "2014-09-06", "average_particullate_matter": 115.93497123236824, "average_temperature": 18.6},
-        {"date": "2014-09-07", "average_particullate_matter": 115.90604893590697, "average_temperature": 17.4},
-        {"date": "2014-09-08", "average_particullate_matter": 114.18689680772086, "average_temperature": 13.5},
-        {"date": "2014-09-09", "average_particullate_matter": 111.43518776292996, "average_temperature": 15.2},
-        {"date": "2014-09-10", "average_particullate_matter": 112.76928668646374, "average_temperature": 14.7},
-        {"date": "2014-09-11", "average_particullate_matter": 112.58236667903984, "average_temperature": 15.8},
-        {"date": "2014-09-12", "average_particullate_matter": 111.58464024993812, "average_temperature": 14.5},
-        {"date": "2014-09-13", "average_particullate_matter": 66.81935854356952, "average_temperature": 15.7},
-        {"date": "2014-09-14", "average_particullate_matter": 110.20188381588716, "average_temperature": 16.7},
-        {"date": "2014-09-15", "average_particullate_matter": 111.26392755506062, "average_temperature": 16.8},
-        {"date": "2014-09-16", "average_particullate_matter": 109.3392647240782, "average_temperature": 16.2},
-        {"date": "2014-09-17", "average_particullate_matter": 110.61387960900768, "average_temperature": 15.2},
-        {"date": "2014-09-18", "average_particullate_matter": 114.75792656520665, "average_temperature": 16.6},
-        {"date": "2014-09-19", "average_particullate_matter": 116.25957374412272, "average_temperature": 14.9},
-        {"date": "2014-09-20", "average_particullate_matter": 115.90875556792874, "average_temperature": 13.2},
-        {"date": "2014-09-21", "average_particullate_matter": 117.11045378619154, "average_temperature": 14.3},
-        {"date": "2014-09-22", "average_particullate_matter": 116.88960807968326, "average_temperature": 10.6},
-        {"date": "2014-09-23", "average_particullate_matter": 115.45029076961148, "average_temperature": 10.0},
-        {"date": "2014-09-24", "average_particullate_matter": 115.60388827023014, "average_temperature": 12.8},
-        {"date": "2014-09-25", "average_particullate_matter": 113.8519472284088, "average_temperature": 12.4},
-        {"date": "2014-09-26", "average_particullate_matter": 111.65567774065823, "average_temperature": 14.8},
-        {"date": "2014-09-27", "average_particullate_matter": 112.37465973768867, "average_temperature": 13.2},
-        {"date": "2014-09-28", "average_particullate_matter": 113.68006836179164, "average_temperature": 14.2},
-        {"date": "2014-09-29", "average_particullate_matter": 114.92324764909677, "average_temperature": 15.3},
-        {"date": "2014-09-30", "average_particullate_matter": 113.1759899343418, "average_temperature": 14.1}
-        ];
+        {"average_particullate_matter": 66.81935854356952, "average_temperature": 21.4},
+        {"average_particullate_matter": 70.1, "average_temperature": 22.3},
+        {"average_particullate_matter": 55.3, "average_temperature": 20.1}
+    ];
 
-    const data = {
-        labels: searched_result.map(item => item.date),
-        datasets: [{
-            label: 'Particulates 🌫️',
-            data: searched_result.map(item => item.average_particullate_matter),
-            borderColor: 'rgb(255, 99, 132)',
-            fill: false,
-            tension: 0.1
-        }, {
-            label: 'Temperature 🌡️',
-            data: searched_result.map(item => item.average_temperature),
-            borderColor: 'rgb(54, 162, 235)',
-            fill: false,
-            tension: 0.1
-        }]
-    };
+    // 检查是否存在 date 键
+    const hasDate = searched_result.some(item => 'date' in item);
 
-    const config = {
-        type: 'line',
-        data: data,
-        options: {
-            responsive: true,
-            interaction: {
-                mode: 'index',
-                intersect: false,
-            },
-            plugins: {
-                tooltip: {
-                    enabled: false,
-                    external: function(context) {
-                        const tooltipEl = document.getElementById('tooltip');
-                        if (context.tooltip.opacity === 0) {
-                            tooltipEl.style.opacity = 0;
-                            return;
-                        }
+    if (hasDate) {
+        // 按日期排序
+        searched_result.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-                        const dataIndex = context.tooltip.dataPoints[0].dataIndex;
-                        tooltipEl.innerHTML = `
-                            <strong>Date:</strong> ${searched_result[dataIndex].date}<br>
-                            💨 <strong>Particulates:</strong> ${searched_result[dataIndex].average_particullate_matter.toFixed(2)}<br>
-                            🌡️ <strong>Temperature:</strong> ${searched_result[dataIndex].average_temperature.toFixed(1)} °C
-                        `;
+        // 提取数据
+        const dates = searched_result.map(item => item.date);
+        const keys = Object.keys(searched_result[0]).filter(key => key !== 'date');
 
-                        const position = context.chart.canvas.getBoundingClientRect();
-                        tooltipEl.style.opacity = 1;
-                        tooltipEl.style.left = position.left + window.pageXOffset + context.tooltip.caretX - (tooltipEl.offsetWidth / 2) + 'px';
-                        tooltipEl.style.top = position.top + window.pageYOffset + context.tooltip.caretY - tooltipEl.offsetHeight - 10 + 'px';
-                    }
-                },
-            },
-            scales: {
-                x: {
-                    grid: {
-                        display: true,
-                        borderDash: [8, 4],
-                    }
-                },
-                y: {
-                    grid: {
-                        display: true,
-                        borderDash: [8, 4],
-                    }
-                }
-            }
+        // 创建每个标签的折线图
+        const traces = keys.map(key => {
+            return {
+                x: dates,
+                y: searched_result.map(item => item[key]),
+                mode: 'lines+markers',
+                type: 'scatter',
+                name: key // 用 key 作为标签
+            };
+        });
+
+        const layout = {
+            title: 'Multi-Line Chart',
+            xaxis: { title: 'Date' },
+            yaxis: { title: 'Values' },
+            legend: { title: { text: 'Labels' } }
+        };
+
+        Plotly.newPlot('chart', traces, layout);
+    } else {
+        // 没有日期时，绘制散点图
+        const keys = Object.keys(searched_result[0]);
+        if (keys.length >= 2) {
+            const trace = {
+                x: searched_result.map(item => item[keys[0]]),
+                y: searched_result.map(item => item[keys[1]]),
+                mode: 'markers',
+                type: 'scatter',
+                name: `${keys[0]} vs ${keys[1]}`
+            };
+
+            const layout = {
+                title: 'Scatter Plot',
+                xaxis: { title: keys[0] },
+                yaxis: { title: keys[1] }
+            };
+
+            Plotly.newPlot('chart', [trace], layout);
+        } else {
+            document.getElementById('chart').innerHTML = '<p>Insufficient data for visualization.</p>';
         }
-    };
-
-    const lineChart = new Chart(
-        document.getElementById('lineChart'),
-        config
-    );
+    }
 </script>
-
 </body>
 </html>
+
 """
 events_html_code="""
 <!DOCTYPE html>
@@ -640,6 +518,9 @@ closet_address="""
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Closest Parking Addresses</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -647,7 +528,7 @@ closet_address="""
             padding: 0;
             background-color: #f5f5f5;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
             min-height: 100vh;
         }
@@ -658,6 +539,7 @@ closet_address="""
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             border-radius: 8px;
             padding: 20px;
+            margin-bottom: 20px;
         }
 
         .parking-card {
@@ -670,7 +552,6 @@ closet_address="""
             margin-bottom: 15px;
             transition: all 0.3s ease;
             cursor: pointer;
-            position: relative;
         }
 
         .parking-card:hover {
@@ -691,45 +572,17 @@ closet_address="""
             color: #777;
         }
 
-        .emoji {
-            font-size: 2rem;
-            margin-right: 10px;
+        .map-container {
+            width: 80%;
+            height: 400px;
+            margin: 0 auto;
+            border-radius: 8px;
+            overflow: hidden;
         }
 
-        .popup {
-            visibility: hidden;
-            background-color: #fff;
-            border: 1px solid #ccc;
-            padding: 10px;
-            position: absolute;
-            top: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            border-radius: 6px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            z-index: 10;
-            width: fit-content;
-            transition: visibility 0.3s ease;
-        }
-
-        .parking-card:hover .popup {
-            visibility: visible;
-        }
-        
-        .grid-line {
-            background: repeating-linear-gradient(90deg, #ebebeb, #ebebeb 1px, transparent 1px, transparent 20px);
-            position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            right: 0;
-            pointer-events: none;
-        }
-
-        .heading {
-            text-align: center;
-            margin-bottom: 20px;
-            position: relative;
+        #map {
+            width: 100%;
+            height: 100%;
         }
 
     </style>
@@ -738,48 +591,66 @@ closet_address="""
 
 <div class="container">
     <div class="heading">
-        <h2>🚗 Closest Parking Near Tilst Bibliotek</h2>
-        <div class="grid-line"></div>
+        <h2>🚗 Closest Parking</h2>
     </div>
     <div id="parking-list">
         <!-- Parking cards will be dynamically inserted here -->
     </div>
 </div>
 
+<div class="map-container">
+    <div id="map"></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+
 <script>
     const searched_result = [
-        {"date": "2014-05-22", "longitude": 10.197, "latitude": 56.1527, "garagecode": "SCANDCENTER", "occupancy rate": 0.4462609970674487},
-        {"date": "2014-05-23", "longitude": 10.197, "latitude": 56.1527, "garagecode": "SCANDCENTER", "occupancy rate": 0.7021505376344086},
-        {"date": "2014-05-25", "longitude": 10.197, "latitude": 56.1527, "garagecode": "SCANDCENTER", "occupancy rate": 0.2785714285714285},
-        {"date": "2014-05-26", "longitude": 10.197, "latitude": 56.1527, "garagecode": "SCANDCENTER", "occupancy rate": 0.3617775537634408},
-        {"date": "2014-05-27", "longitude": 10.197, "latitude": 56.1527, "garagecode": "SCANDCENTER", "occupancy rate": 0.3447076612903225}
-        ];
+        {"date": "2014-05-22", "longitude": 10.197, "latitude": 56.1527, "garagecode": "SCANDCENTER", "occupancy_rate": 0.4462609970674487},
+        {"date": "2014-05-22", "longitude": 10.197, "latitude": 56.1527, "garagecode": "SCANDCENTER", "occupancy_rate": 0.4462609970674487},
+        {"date": "2014-05-22", "longitude": 10.197, "latitude": 56.1527, "garagecode": "SCANDCENTER", "occupancy_rate": 0.4462609970674487},
+        {"date": "2014-05-22", "longitude": 10.197, "latitude": 56.1527, "garagecode": "SCANDCENTER", "occupancy_rate": 0.4462609970674487},
+    ];
 
     const parkingList = document.getElementById('parking-list');
+
+    // Initialize Leaflet map
+    const map = L.map('map').setView([56.1527, 10.197], 15);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    let marker;
 
     searched_result.forEach(parking => {
         const card = document.createElement('div');
         card.className = 'parking-card';
-        
+
         card.innerHTML = `
             <div class="info">
                 <h4>${parking.garagecode}</h4>
                 <small>${parking.date}</small>
             </div>
             <div class="occupancy">
-                <h4>🔄 Occupancy Rate: ${Math.round(parking.occupancy_rate * 100)}%</h4>
-            </div>
-            <div class="popup">
-                <strong>Coordinates:</strong><br>
-                Longitude: ${parking.longitude} <br>
-                Latitude: ${parking.latitude}
+                <h4>🔄 Occupancy Rate: ${Math.round(parking["occupancy rate"] * 100)}%</h4>
             </div>
         `;
-        
+
+        card.addEventListener('click', () => {
+            if (marker) {
+                map.removeLayer(marker);
+            }
+            marker = L.marker([parking.latitude, parking.longitude]).addTo(map)
+                .bindPopup(`<strong>${parking.garagecode}</strong><br>Occupancy Rate: ${Math.round(parking["occupancy rate"] * 100)}%`)
+                .openPopup();
+            map.setView([parking.latitude, parking.longitude], 16);
+        });
+
         parkingList.appendChild(card);
     });
 </script>
 
 </body>
 </html>
+
 """

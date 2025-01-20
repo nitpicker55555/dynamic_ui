@@ -81,7 +81,11 @@ def get_data_prompt(data_info,route_plan):
     
         """
     else:
-        route_plan_prompt=""
+        route_plan_prompt="""
+    如果要查找某个地方附近的停车场，可以直接调用
+    get_parking(address,number)
+    Return [parking list..]
+        """
     data_prompt=f"""
     我有下面几个数据库，他们每个键的数据类型和范围如下所示：
     {data_info}
@@ -92,6 +96,8 @@ def get_data_prompt(data_info,route_plan):
     Return：got corresponding data：overview:{{'length': 14, 'keys': dict_keys(['date', 'weather', 'average_temperature', 'average_wind_speed'])}}
     比如查找名为aaa的活动，event_data = get_data(['aaa'], 'events')
     Return [{{'city': 'bbb', 'title': 'aaa', 'price': '0', 'library': 'Tilst Bibliotek', 'longitude': 10.111042, 'latitude': 56.18945, 'date': '2013-10-28'}}]
+    
+
     
     {route_plan_prompt}
     

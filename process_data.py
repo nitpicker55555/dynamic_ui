@@ -159,7 +159,14 @@ def get_data(data_names, csv_filename):
         return json.dumps({"error": "CSV file not found."}, ensure_ascii=False)
     except Exception as e:
         return json.dumps({"error": str(e)}, ensure_ascii=False)
-
+def get_parking(aa,num):
+    return [
+        {"Unnamed: 0": 0, "date": "2014-05-22", "longitude": 10.197, "latitude": 56.1527, "garagecode": "SCANDCENTER", "occupancy rate": 0.4462609970674487, "distance": 0.03947075581997641},
+        {"Unnamed: 0": 2, "date": "2014-05-22", "longitude": 10.20596, "latitude": 56.14951, "garagecode": "BRUUNS", "occupancy rate": 0.0230849947534101, "distance": 0.04571404056742314},
+        {"Unnamed: 0": 1, "date": "2014-05-22", "longitude": 10.2049, "latitude": 56.15679, "garagecode": "MAGASIN", "occupancy rate": 0.3525, "distance": 0.04831217760565359},
+        {"Unnamed: 0": 3, "date": "2014-05-22", "longitude": 10.206, "latitude": 56.15561, "garagecode": "BUSGADEHUSET", "occupancy rate": 1.1041958041958042, "distance": 0.04861506993721435},
+        {"Unnamed: 0": 4, "date": "2014-05-22", "longitude": 10.20818, "latitude": 56.15441, "garagecode": "SALLING", "occupancy rate": 0.3041558441558441, "distance": 0.049903497522719796}
+        ];
 def plan_routes(start_longitude, start_latitude, end_longitude, end_latitude):
     best_3_routes = plan_routes_function(start_longitude, start_latitude, end_longitude, end_latitude, k=3)
     return best_3_routes
