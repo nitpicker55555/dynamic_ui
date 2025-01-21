@@ -3,6 +3,7 @@ from route_plan import *
 import pandas as pd
 import numpy as np
 import csv
+from geopy.distance import geodesic
 def know_data( column_names,csv_file):
     """
     获取指定CSV文件中指定列的数据类型和数据范围。
@@ -159,14 +160,46 @@ def get_data(data_names, csv_filename):
         return json.dumps({"error": "CSV file not found."}, ensure_ascii=False)
     except Exception as e:
         return json.dumps({"error": str(e)}, ensure_ascii=False)
-def get_parking(aa,num):
-    return [
-        {"Unnamed: 0": 0, "date": "2014-05-22", "longitude": 10.197, "latitude": 56.1527, "garagecode": "SCANDCENTER", "occupancy rate": 0.4462609970674487, "distance": 0.03947075581997641},
-        {"Unnamed: 0": 2, "date": "2014-05-22", "longitude": 10.20596, "latitude": 56.14951, "garagecode": "BRUUNS", "occupancy rate": 0.0230849947534101, "distance": 0.04571404056742314},
-        {"Unnamed: 0": 1, "date": "2014-05-22", "longitude": 10.2049, "latitude": 56.15679, "garagecode": "MAGASIN", "occupancy rate": 0.3525, "distance": 0.04831217760565359},
-        {"Unnamed: 0": 3, "date": "2014-05-22", "longitude": 10.206, "latitude": 56.15561, "garagecode": "BUSGADEHUSET", "occupancy rate": 1.1041958041958042, "distance": 0.04861506993721435},
-        {"Unnamed: 0": 4, "date": "2014-05-22", "longitude": 10.20818, "latitude": 56.15441, "garagecode": "SALLING", "occupancy rate": 0.3041558441558441, "distance": 0.049903497522719796}
-        ];
+def get_parking(name,address,n):
+    latitude, longitude=address
+    """
+    Find the nearest n locations to the given latitude and longitude.
+
+    Parameters:
+        file_path (str): Path to the CSV file containing 'latitude' and 'longitude' columns.
+        latitude (float): Latitude of the input location.
+        longitude (float): Longitude of the input location.
+        n (int): Number of nearest locations to return.
+
+    Returns:
+        list: A JSON-compatible list of dictionaries representing the nearest n rows.
+    """
+    # Load the CSV file
+    df = pd.read_csv('available_data/parking.csv')
+
+    # Ensure the required columns exist
+    if 'latitude' not in df.columns or 'longitude' not in df.columns:
+        raise ValueError("The CSV file must contain 'latitude' and 'longitude' columns.")
+
+    # Calculate distances
+    def calculate_distance(row):
+        return geodesic((latitude, longitude), (row['latitude'], row['longitude'])).kilometers
+
+    df['distance'] = df.apply(calculate_distance, axis=1)
+
+    # Sort by distance and select the top n rows
+    nearest_locations = df.nsmallest(n, 'distance')
+
+    result = {
+        "reference_point_name": name,
+        "reference_point_location": {"latitude": latitude, "longitude": longitude},
+        "nearest_locations": nearest_locations.to_dict(orient='records')
+    }
+
+    return result
+
+
+
 def plan_routes(start_longitude, start_latitude, end_longitude, end_latitude):
     best_3_routes = plan_routes_function(start_longitude, start_latitude, end_longitude, end_latitude, k=3)
     return best_3_routes
@@ -205,4 +238,14 @@ def plan_routes(start_longitude, start_latitude, end_longitude, end_latitude):
 #
 # get_data('Good', 'weather')
 # get_data('Good', 'weather')
-# # print(know_data(final_result[0].keys(),'events'))
+# # # print(know_data(final_result[0].keys(),'events'))
+# library_location = get_data(['Tilst Bibliotek'], 'events')
+# # Assuming the location details are in the first element of the list
+# tilst_bibliotek_location = library_location[0]
+#
+# # Step 2: Use the latitude and longitude from Tilst Bibliotek to find parking nearby
+# latitude = tilst_bibliotek_location['latitude']
+# longitude = tilst_bibliotek_location['longitude']
+#
+# searched_result = get_parking('name',(latitude, longitude), 5)
+# print(searched_result)

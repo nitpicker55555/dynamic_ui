@@ -83,7 +83,7 @@ def get_data_prompt(data_info,route_plan):
     else:
         route_plan_prompt="""
     如果要查找某个地方附近的停车场，可以直接调用
-    get_parking(address,number)
+    get_parking(place_name, (latitude, longitude),number)
     Return [parking list..]
         """
     data_prompt=f"""
