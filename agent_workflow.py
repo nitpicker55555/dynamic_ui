@@ -120,7 +120,10 @@ def html_generate_agent(query,searched_result,other_result,route_plan):
             # other_result_short[databasename]=[other_result[databasename][0]]
     variables_list=["searched_result"]
     variables_list.extend(list(other_result.keys()))
-    html_prompt=get_html_generate_prompt(query,str(searched_result[0])+",...",other_result_short,variables_list,route_plan)
+    try:
+        html_prompt=get_html_generate_prompt(query,str(searched_result[0])+",...",other_result_short,variables_list,route_plan)
+    except:
+        html_prompt=''
     print("html_prompt", html_prompt)
     messages.append(message_template('system',html_prompt))
     messages.append(message_template('user',query))
