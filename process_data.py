@@ -190,11 +190,11 @@ def get_parking(name,address,n):
     # Sort by distance and select the top n rows
     nearest_locations = df.nsmallest(n, 'distance')
 
-    result = {
+    result = [{
         "reference_point_name": name,
         "reference_point_location": {"latitude": latitude, "longitude": longitude},
         "nearest_locations": nearest_locations.to_dict(orient='records')
-    }
+    }]
 
     return result
 

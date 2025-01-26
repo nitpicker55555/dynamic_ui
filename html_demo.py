@@ -594,6 +594,7 @@ closet_address="""
 </div>
 
 <script>
+
     const searched_result = [
         {
         'reference_point_name': 'Reference Point',
