@@ -213,7 +213,7 @@ for date in good_weather_low_pollution_dates:
     print(new_html)
     return new_html,html_generate_agent_response,replacements_json
 
-generate_response('closet 6 parking around Viby Bibliotek')
+# generate_response('closet 6 parking around Viby Bibliotek')
 # resuls=get_data(['2014-08-02', '2014-08-09', '2014-08-15', '2014-08-01', '2014-08-04'],'events')
 # code_str="""
 # viby_bibliotek_location = get_data(['Viby Bibliotek'], 'events')
