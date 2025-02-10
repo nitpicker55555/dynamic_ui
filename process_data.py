@@ -98,6 +98,33 @@ def know_data( column_names,csv_file):
         return {"error": str(e)}
 
 
+import requests
+
+
+def get_street_name(lat, lon):
+    url = f"https://nominatim.openstreetmap.org/reverse?format=json&lat={lat}&lon={lon}"
+    headers = {"User-Agent": "YourAppName/1.0 (your@email.com)"}  # 避免被拒绝访问
+
+    try:
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()  # 检查 HTTP 请求是否成功
+        data = response.json()
+
+        # 提取街道名称
+        street_name = data.get("address", {}).get("suburb", "unkown suburb")+", " +data.get("address", {}).get("road", "unkown road")+", " +data.get("address", {}).get("house_number", "unkown house_number")
+        return street_name
+
+    except requests.RequestException as e:
+        print(f"请求错误: {e}")
+        return None
+
+
+# # 示例调用
+# latitude = 39.9042  # 北京纬度
+# longitude = 116.4074  # 北京经度
+# street = get_street_name(latitude, longitude)
+# print(f"街道名称: {street}")
+
 
 def get_data(data_names, csv_filename):
     """
@@ -192,10 +219,11 @@ def get_parking(name,address,n):
 
     result = [{
         "reference_point_name": name,
-        "reference_point_location": {"latitude": latitude, "longitude": longitude},
+        "reference_point_location": {"latitude": latitude, "longitude": longitude, 'address':get_street_name(latitude,longitude)},
         "nearest_locations": nearest_locations.to_dict(orient='records')
     }]
-
+    for parking in result[0]['nearest_locations']:
+        parking['address']=get_street_name(parking['latitude'],parking['longitude'])
     return result
 
 
@@ -203,7 +231,12 @@ def get_parking(name,address,n):
 def plan_routes(start_longitude, start_latitude, end_longitude, end_latitude):
     best_3_routes = plan_routes_function(start_longitude, start_latitude, end_longitude, end_latitude, k=3)
     return best_3_routes
-# get_data("Viby Bibliotek",'events')
+# latitude = 56.1527   # 北京纬度
+# longitude = 10.197  # 北京经度
+#
+# street = get_street_name(latitude, longitude)
+# print(f"街道名称: {street}")
+# # get_data("Viby Bibliotek",'events')
 # start_longitude, start_latitude = 10.21284, 56.16184  # 北京天安门
 # end_longitude, end_latitude = 10.164431,56.130402 # 北京某地示例
 # #
@@ -242,10 +275,10 @@ def plan_routes(start_longitude, start_latitude, end_longitude, end_latitude):
 # library_location = get_data(['Tilst Bibliotek'], 'events')
 # # Assuming the location details are in the first element of the list
 # tilst_bibliotek_location = library_location[0]
-#
-# # Step 2: Use the latitude and longitude from Tilst Bibliotek to find parking nearby
+# #
+# # # Step 2: Use the latitude and longitude from Tilst Bibliotek to find parking nearby
 # latitude = tilst_bibliotek_location['latitude']
 # longitude = tilst_bibliotek_location['longitude']
-#
+# #
 # searched_result = get_parking('name',(latitude, longitude), 5)
 # print(searched_result)
